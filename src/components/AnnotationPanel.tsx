@@ -1,0 +1,174 @@
+import { CropArea, TimeRange, Annotation } from "./VideoAnnotationTool";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Trash2, Edit3, Clock, Scissors } from "lucide-react";
+
+interface AnnotationPanelProps {
+  label: string;
+  onLabelChange: (label: string) => void;
+  cropArea: CropArea;
+  timeRange: TimeRange;
+  onAddAnnotation: () => void;
+  annotations: Annotation[];
+  onDeleteAnnotation: (id: string) => void;
+}
+
+export const AnnotationPanel = ({
+  label,
+  onLabelChange,
+  cropArea,
+  timeRange,
+  onAddAnnotation,
+  annotations,
+  onDeleteAnnotation
+}: AnnotationPanelProps) => {
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatDimensions = (area: CropArea) => {
+    return `${Math.round(area.width)}×${Math.round(area.height)}`;
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Current Selection Info */}
+      <Card className="p-4 bg-gradient-accent border-primary/20">
+        <div className="space-y-3">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Edit3 className="w-4 h-4" />
+            Current Selection
+          </h3>
+          
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="space-y-1">
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Scissors className="w-3 h-3" />
+                Crop Area
+              </div>
+              <Badge variant="outline" className="w-full justify-center">
+                {formatDimensions(cropArea)}
+              </Badge>
+            </div>
+            
+            <div className="space-y-1">
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Clock className="w-3 h-3" />
+                Duration
+              </div>
+              <Badge variant="outline" className="w-full justify-center">
+                {(timeRange.end - timeRange.start).toFixed(1)}s
+              </Badge>
+            </div>
+          </div>
+          
+          <div className="text-xs text-muted-foreground">
+            Time: {formatTime(timeRange.start)} → {formatTime(timeRange.end)}
+          </div>
+        </div>
+      </Card>
+
+      {/* Add Annotation */}
+      <Card className="p-4">
+        <div className="space-y-4">
+          <h3 className="font-semibold">Add Annotation</h3>
+          
+          <div className="space-y-2">
+            <Label htmlFor="label">Label</Label>
+            <Input
+              id="label"
+              value={label}
+              onChange={(e) => onLabelChange(e.target.value)}
+              placeholder="Enter description or label..."
+              className="w-full"
+            />
+          </div>
+          
+          <Button 
+            onClick={onAddAnnotation}
+            className="w-full shadow-glow"
+            disabled={!label.trim()}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Annotation
+          </Button>
+        </div>
+      </Card>
+
+      {/* Annotations List */}
+      <Card className="p-4">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold">Annotations</h3>
+            <Badge variant="secondary">{annotations.length}</Badge>
+          </div>
+          
+          {annotations.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Edit3 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No annotations yet</p>
+              <p className="text-xs">Add your first annotation above</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {annotations.map((annotation, index) => (
+                <div key={annotation.id} className="group">
+                  <div className="p-3 bg-secondary/20 rounded-lg border border-border/50 hover:border-primary/30 transition-colors">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate mb-1">
+                          {annotation.label}
+                        </div>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-3 h-3" />
+                            {formatTime(annotation.timeRange.start)} - {formatTime(annotation.timeRange.end)}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Scissors className="w-3 h-3" />
+                            {formatDimensions(annotation.cropArea)}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDeleteAnnotation(annotation.id)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-destructive/20 hover:text-destructive"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    
+                    <div className="mt-2 pt-2 border-t border-border/30">
+                      <div className="text-xs text-muted-foreground truncate">
+                        {annotation.filename}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {annotations.length > 0 && (
+            <>
+              <Separator />
+              <div className="text-xs text-muted-foreground">
+                Total clips: {annotations.length} • 
+                Total duration: {annotations.reduce((sum, ann) => sum + (ann.timeRange.end - ann.timeRange.start), 0).toFixed(1)}s
+              </div>
+            </>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+};
