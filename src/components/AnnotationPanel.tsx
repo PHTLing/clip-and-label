@@ -15,6 +15,8 @@ interface AnnotationPanelProps {
   onAddAnnotation: () => void;
   annotations: Annotation[];
   onDeleteAnnotation: (id: string) => void;
+  onSelectAnnotation?: (annotation: Annotation) => void;
+  selectedAnnotation?: string | null;
 }
 
 export const AnnotationPanel = ({
@@ -24,7 +26,9 @@ export const AnnotationPanel = ({
   timeRange,
   onAddAnnotation,
   annotations,
-  onDeleteAnnotation
+  onDeleteAnnotation,
+  onSelectAnnotation,
+  selectedAnnotation
 }: AnnotationPanelProps) => {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -119,16 +123,27 @@ export const AnnotationPanel = ({
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {annotations.map((annotation, index) => (
                 <div key={annotation.id} className="group">
-                  <div className="p-3 bg-secondary/20 rounded-lg border border-border/50 hover:border-primary/30 transition-colors">
+                  <div 
+                    className={`p-3 rounded-lg border transition-all cursor-pointer ${
+                      selectedAnnotation === annotation.id 
+                        ? 'bg-primary/10 border-primary/50 shadow-glow' 
+                        : 'bg-secondary/20 border-border/50 hover:border-primary/30'
+                    }`}
+                    onClick={() => onSelectAnnotation?.(annotation)}
+                  >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm truncate mb-1">
+                        <div className="font-medium text-sm truncate mb-1 flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${
+                            selectedAnnotation === annotation.id ? 'bg-primary' : 'bg-muted-foreground'
+                          }`} />
                           {annotation.label}
                         </div>
                         <div className="text-xs text-muted-foreground space-y-1">
                           <div className="flex items-center gap-2">
                             <Clock className="w-3 h-3" />
                             {formatTime(annotation.timeRange.start)} - {formatTime(annotation.timeRange.end)}
+                            <span className="text-accent">({(annotation.timeRange.end - annotation.timeRange.start).toFixed(1)}s)</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <Scissors className="w-3 h-3" />
@@ -137,19 +152,37 @@ export const AnnotationPanel = ({
                         </div>
                       </div>
                       
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onDeleteAnnotation(annotation.id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-destructive/20 hover:text-destructive"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectAnnotation?.(annotation);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-accent/20"
+                          title="Jump to annotation"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteAnnotation(annotation.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-destructive/20 hover:text-destructive"
+                          title="Delete annotation"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
                     
                     <div className="mt-2 pt-2 border-t border-border/30">
                       <div className="text-xs text-muted-foreground truncate">
-                        {annotation.filename}
+                        📁 {annotation.filename}
                       </div>
                     </div>
                   </div>

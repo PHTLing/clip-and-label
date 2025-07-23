@@ -195,9 +195,11 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
         </div>
 
         {/* Demo Notice */}
-        <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
-          <div className="text-xs text-accent-foreground">
-            <strong>Demo Mode:</strong> Video processing is simulated. In production, this would generate actual cropped video clips using server-side processing or WebAssembly.
+        <div className="p-3 bg-gradient-accent border border-accent/30 rounded-lg">
+          <div className="text-xs text-accent-foreground space-y-1">
+            <div><strong>✨ Demo Mode:</strong> Video processing is simulated for demonstration.</div>
+            <div>🔧 <strong>Production:</strong> Would use FFmpeg.js or server-side processing for real video cropping.</div>
+            <div>💾 <strong>Export:</strong> Downloads metadata CSV and simulates video generation.</div>
           </div>
         </div>
       </div>
