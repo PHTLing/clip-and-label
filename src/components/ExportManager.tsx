@@ -7,6 +7,20 @@ import { Badge } from "@/components/ui/badge";
 import { Download, FileSpreadsheet, Video, Package } from "lucide-react";
 import { toast } from "sonner";
 
+let ffmpeg: any;
+let fetchFile: any;
+
+const loadFFmpeg = async () => {
+  if (ffmpeg) return; // đã load
+
+  const mod = await import('@ffmpeg/ffmpeg');
+  const createFFmpeg = mod['createFFmpeg'];
+  fetchFile = mod['fetchFile'];
+  ffmpeg = createFFmpeg({ log: true });
+  await ffmpeg.load();
+};
+
+
 interface ExportManagerProps {
   annotations: Annotation[];
   videoFile: File | null;
@@ -53,24 +67,82 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
     toast("Excel file downloaded successfully!");
   }, [generateExcelData]);
 
+  // const simulateVideoProcessing = useCallback(async () => {
+  //   setIsExporting(true);
+  //   setExportProgress(0);
+
+  //   // Simulate processing each annotation
+  //   for (let i = 0; i < annotations.length; i++) {
+  //     // Simulate processing time
+  //     await new Promise(resolve => setTimeout(resolve, 1000));
+  //     setExportProgress(((i + 1) / annotations.length) * 100);
+  //   }
+
+  //   // Simulate final packaging
+  //   await new Promise(resolve => setTimeout(resolve, 500));
+  //   setIsExporting(false);
+  //   setExportProgress(0);
+
+  //   toast("Video processing completed! (Demo mode)");
+  // }, [annotations.length]);
   const simulateVideoProcessing = useCallback(async () => {
+    if (!videoFile) {
+      toast("⚠️ Video file is required.");
+      return;
+    }
+
+    await loadFFmpeg(); // Load module nếu chưa có
+
     setIsExporting(true);
     setExportProgress(0);
 
-    // Simulate processing each annotation
-    for (let i = 0; i < annotations.length; i++) {
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setExportProgress(((i + 1) / annotations.length) * 100);
+    try {
+      const inputName = 'input.mp4';
+      ffmpeg.FS('writeFile', inputName, await fetchFile(videoFile));
+
+      for (let i = 0; i < annotations.length; i++) {
+        const ann = annotations[i];
+        const outputName = `clip_${i + 1}_${ann.label || 'clip'}.mp4`;
+
+        const start = ann.timeRange.start.toFixed(2);
+        const duration = (ann.timeRange.end - ann.timeRange.start).toFixed(2);
+        const crop = ann.cropArea;
+
+        await ffmpeg.run(
+          '-i', inputName,
+          '-ss', start,
+          '-t', duration,
+          '-filter:v', `crop=${Math.round(crop.width)}:${Math.round(crop.height)}:${Math.round(crop.x)}:${Math.round(crop.y)}`,
+          '-c:a', 'copy',
+          outputName
+        );
+
+        const data = ffmpeg.FS('readFile', outputName);
+        console.log("Clip size:", data.length, "bytes");
+
+        const videoBlob = new Blob([data.buffer], { type: 'video/mp4' });
+        const videoUrl = URL.createObjectURL(videoBlob);
+
+        const a = document.createElement('a');
+        a.href = videoUrl;
+        a.download = outputName;
+        a.click();
+
+        ffmpeg.FS('unlink', outputName);
+        setExportProgress(((i + 1) / annotations.length) * 100);
+      }
+
+      toast("🎉 All clips exported successfully!");
+    } catch (err) {
+      console.error("❌ FFmpeg Export Error:", err);
+      toast("❌ Export failed");
+    } finally {
+      setIsExporting(false);
+      setExportProgress(0);
     }
+  }, [annotations, videoFile]);
 
-    // Simulate final packaging
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setIsExporting(false);
-    setExportProgress(0);
 
-    toast("Video processing completed! (Demo mode)");
-  }, [annotations.length]);
 
   const exportAll = useCallback(async () => {
     if (annotations.length === 0) {
