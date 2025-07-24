@@ -4,22 +4,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Download, FileSpreadsheet, Video, Package } from "lucide-react";
 import { toast } from "sonner";
-
-let ffmpeg: any;
-let fetchFile: any;
-
-const loadFFmpeg = async () => {
-  if (ffmpeg) return; // đã load
-
-  const mod = await import('@ffmpeg/ffmpeg');
-  const createFFmpeg = mod['createFFmpeg'];
-  fetchFile = mod['fetchFile'];
-  ffmpeg = createFFmpeg({ log: true });
-  await ffmpeg.load();
-};
-
+import { videoProcessor } from "@/lib/videoProcessor";
 
 interface ExportManagerProps {
   annotations: Annotation[];
@@ -67,82 +55,66 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
     toast("Excel file downloaded successfully!");
   }, [generateExcelData]);
 
-  // const simulateVideoProcessing = useCallback(async () => {
-  //   setIsExporting(true);
-  //   setExportProgress(0);
-
-  //   // Simulate processing each annotation
-  //   for (let i = 0; i < annotations.length; i++) {
-  //     // Simulate processing time
-  //     await new Promise(resolve => setTimeout(resolve, 1000));
-  //     setExportProgress(((i + 1) / annotations.length) * 100);
-  //   }
-
-  //   // Simulate final packaging
-  //   await new Promise(resolve => setTimeout(resolve, 500));
-  //   setIsExporting(false);
-  //   setExportProgress(0);
-
-  //   toast("Video processing completed! (Demo mode)");
-  // }, [annotations.length]);
-  const simulateVideoProcessing = useCallback(async () => {
-    if (!videoFile) {
-      toast("⚠️ Video file is required.");
-      return;
-    }
-
-    await loadFFmpeg(); // Load module nếu chưa có
+  const processVideos = useCallback(async () => {
+    if (!videoFile) return;
 
     setIsExporting(true);
     setExportProgress(0);
 
     try {
-      const inputName = 'input.mp4';
-      ffmpeg.FS('writeFile', inputName, await fetchFile(videoFile));
+      toast("Initializing FFmpeg...", { description: "This may take a moment on first use" });
+      
+      // Process all annotations into video clips
+      const results = await videoProcessor.processMultipleAnnotations(
+        videoFile,
+        annotations,
+        (progress, currentIndex) => {
+          setExportProgress(progress);
+          if (currentIndex >= 0) {
+            toast(`Processing clip ${currentIndex + 1}/${annotations.length}...`);
+          }
+        }
+      );
 
-      for (let i = 0; i < annotations.length; i++) {
-        const ann = annotations[i];
-        const outputName = `clip_${i + 1}_${ann.label || 'clip'}.mp4`;
-
-        const start = ann.timeRange.start.toFixed(2);
-        const duration = (ann.timeRange.end - ann.timeRange.start).toFixed(2);
-        const crop = ann.cropArea;
-
-        await ffmpeg.run(
-          '-i', inputName,
-          '-ss', start,
-          '-t', duration,
-          '-filter:v', `crop=${Math.round(crop.width)}:${Math.round(crop.height)}:${Math.round(crop.x)}:${Math.round(crop.y)}`,
-          '-c:a', 'copy',
-          outputName
-        );
-
-        const data = ffmpeg.FS('readFile', outputName);
-        console.log("Clip size:", data.length, "bytes");
-
-        const videoBlob = new Blob([data.buffer], { type: 'video/mp4' });
-        const videoUrl = URL.createObjectURL(videoBlob);
-
-        const a = document.createElement('a');
-        a.href = videoUrl;
-        a.download = outputName;
-        a.click();
-
-        ffmpeg.FS('unlink', outputName);
-        setExportProgress(((i + 1) / annotations.length) * 100);
+      // Download all processed videos with a small delay between downloads
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        
+        // Create download link
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(result.blob);
+        
+        link.href = url;
+        link.download = result.filename;
+        link.style.display = 'none';
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up URL and add small delay
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        
+        // Small delay between downloads to avoid browser blocking
+        if (i < results.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
 
-      toast("🎉 All clips exported successfully!");
-    } catch (err) {
-      console.error("❌ FFmpeg Export Error:", err);
-      toast("❌ Export failed");
+      toast(`Successfully exported ${results.length} video clips!`, { 
+        description: "Check your downloads folder" 
+      });
+    } catch (error) {
+      console.error('Video processing error:', error);
+      toast("Video processing failed", { 
+        description: error instanceof Error ? error.message : "Unknown error occurred" 
+      });
     } finally {
       setIsExporting(false);
       setExportProgress(0);
     }
-  }, [annotations, videoFile]);
-
-
+  }, [videoFile, annotations]);
 
   const exportAll = useCallback(async () => {
     if (annotations.length === 0) {
@@ -154,8 +126,8 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
       // Download Excel first
       downloadExcel();
       
-      // Then simulate video processing
-      await simulateVideoProcessing();
+      // Then process videos
+      await processVideos();
       
       toast("Export completed successfully!");
     } catch (error) {
@@ -163,7 +135,7 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
       setIsExporting(false);
       setExportProgress(0);
     }
-  }, [annotations.length, downloadExcel, simulateVideoProcessing]);
+  }, [annotations.length, downloadExcel, processVideos]);
 
   const getTotalDuration = useCallback(() => {
     return annotations.reduce((sum, ann) => sum + (ann.timeRange.end - ann.timeRange.start), 0);
@@ -237,23 +209,41 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
             Download Excel Only
           </Button>
           
-          <Button
-            onClick={exportAll}
-            className="w-full shadow-glow"
-            disabled={annotations.length === 0 || isExporting || !videoFile}
-          >
-            {isExporting ? (
-              <>
-                <Video className="w-4 h-4 mr-2 animate-pulse" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Download className="w-4 h-4 mr-2" />
-                Export All
-              </>
-            )}
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                className="w-full shadow-glow"
+                disabled={annotations.length === 0 || isExporting || !videoFile}
+              >
+                {isExporting ? (
+                  <>
+                    <Video className="w-4 h-4 mr-2 animate-pulse" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-2" />
+                    Export All
+                  </>
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirm Export</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will process and download {annotations.length} video clips plus metadata Excel file. 
+                  The process may take several minutes depending on clip length and complexity.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={exportAll}>
+                  Start Export
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
 
         {/* Export Info */}
@@ -266,12 +256,12 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
           )}
         </div>
 
-        {/* Demo Notice */}
+        {/* Processing Notice */}
         <div className="p-3 bg-gradient-accent border border-accent/30 rounded-lg">
           <div className="text-xs text-accent-foreground space-y-1">
-            <div><strong>✨ Demo Mode:</strong> Video processing is simulated for demonstration.</div>
-            <div>🔧 <strong>Production:</strong> Would use FFmpeg.js or server-side processing for real video cropping.</div>
-            <div>💾 <strong>Export:</strong> Downloads metadata CSV and simulates video generation.</div>
+            <div><strong>🎬 Video Processing:</strong> Real video cropping and trimming with FFmpeg.js</div>
+            <div>💾 <strong>Output:</strong> Downloads CSV metadata + individual MP4 clips</div>
+            <div>⚡ <strong>Performance:</strong> Processing happens in your browser - no server required</div>
           </div>
         </div>
       </div>
