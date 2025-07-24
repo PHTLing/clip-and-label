@@ -14,13 +14,13 @@ export class VideoProcessor {
     if (this.isLoaded) return;
 
     try {
-      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+      const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
       
       this.ffmpeg.on('log', ({ message }) => {
         console.log(message);
       });
 
-      // Load FFmpeg with proper URLs
+      // Load FFmpeg with JSDelivr CDN (better CORS policy)
       await this.ffmpeg.load({
         coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
         wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
