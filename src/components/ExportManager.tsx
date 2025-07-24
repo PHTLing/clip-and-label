@@ -12,9 +12,15 @@ import { videoProcessor } from "@/lib/videoProcessor";
 interface ExportManagerProps {
   annotations: Annotation[];
   videoFile: File | null;
+  resolutionInfo: {
+    videoWidth: number;
+    videoHeight: number;
+    canvasWidth: number;
+    canvasHeight: number;
+  };
 }
 
-export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) => {
+export const ExportManager = ({ annotations, videoFile, resolutionInfo }: ExportManagerProps) => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
@@ -64,10 +70,27 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
     try {
       toast("Initializing FFmpeg...", { description: "This may take a moment on first use" });
       
+      const { videoWidth, videoHeight, canvasWidth, canvasHeight } = resolutionInfo;
+
+      const scaleX = videoWidth / canvasWidth;
+      const scaleY = videoHeight / canvasHeight;
+
+      const scaledAnnotations = annotations.map(annotation => ({
+        ...annotation,
+        cropArea: {
+          x: annotation.cropArea.x * scaleX,
+          y: annotation.cropArea.y * scaleY,
+          width: annotation.cropArea.width * scaleX,
+          height: annotation.cropArea.height * scaleY,
+        },
+      }));
+
       // Process all annotations into video clips
       const results = await videoProcessor.processMultipleAnnotations(
         videoFile,
-        annotations,
+        scaledAnnotations,
+        { width: canvasWidth, height: canvasHeight },
+        { width: videoWidth, height: videoHeight },
         (progress, currentIndex) => {
           setExportProgress(progress);
           if (currentIndex >= 0) {
@@ -114,7 +137,7 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
       setIsExporting(false);
       setExportProgress(0);
     }
-  }, [videoFile, annotations]);
+  }, [videoFile, annotations, resolutionInfo]);
 
   const exportAll = useCallback(async () => {
     if (annotations.length === 0) {

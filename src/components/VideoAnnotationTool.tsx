@@ -38,6 +38,17 @@ export const VideoAnnotationTool = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [cropArea, setCropArea] = useState<CropArea>({ x: 50, y: 50, width: 300, height: 200 });
   const [timeRange, setTimeRange] = useState<TimeRange>({ start: 0, end: 5 });
+  const [resolutionInfo, setResolutionInfo] = useState<{
+    videoWidth: number;
+    videoHeight: number;
+    canvasWidth: number;
+    canvasHeight: number;
+  }>({
+    videoWidth: 0,
+    videoHeight: 0,
+    canvasWidth: 0,
+    canvasHeight: 0,
+  });
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [currentLabel, setCurrentLabel] = useState<string>("");
   const [isUploading, setIsUploading] = useState<boolean>(false);
@@ -334,6 +345,7 @@ export const VideoAnnotationTool = () => {
                 videoUrl={videoUrl}
                 cropArea={cropArea}
                 onCropAreaChange={setCropArea}
+                onResolutionChange={setResolutionInfo}
                 currentTime={currentTime}
                 onTimeUpdate={setCurrentTime}
                 onDurationChange={setDuration}
@@ -368,6 +380,7 @@ export const VideoAnnotationTool = () => {
               <ExportManager
                 annotations={annotations}
                 videoFile={videoFile}
+                resolutionInfo={resolutionInfo}
               />
             </div>
           </div>

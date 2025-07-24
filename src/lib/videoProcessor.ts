@@ -37,6 +37,8 @@ export class VideoProcessor {
   async processAnnotation(
     videoFile: File, 
     annotation: Annotation, 
+    canvasResolution: { width: number; height: number },
+    videoResolution: { width: number; height: number },
     onProgress?: (progress: number) => void
   ): Promise<Blob> {
     if (!this.isLoaded) {
@@ -47,15 +49,25 @@ export class VideoProcessor {
     await this.ffmpeg.writeFile('input.mp4', await fetchFile(videoFile));
 
     const { timeRange, cropArea } = annotation;
+
+    const scaleX = videoResolution.width / canvasResolution.width;
+    const scaleY = videoResolution.height / canvasResolution.height;
+
+    const cropX = Math.round(cropArea.x * scaleX);
+    const cropY = Math.round(cropArea.y * scaleY);
+    const cropW = Math.round(cropArea.width * scaleX);
+    const cropH = Math.round(cropArea.height * scaleY);
     
     // FFmpeg command to crop and trim video
     const duration = timeRange.end - timeRange.start;
+    
+    
     
     await this.ffmpeg.exec([
       '-i', 'input.mp4',
       '-ss', timeRange.start.toString(),
       '-t', duration.toString(),
-      '-filter:v', `crop=${Math.round(cropArea.width)}:${Math.round(cropArea.height)}:${Math.round(cropArea.x)}:${Math.round(cropArea.y)}`,
+      '-filter:v', `crop=${cropW}:${cropH}:${cropX}:${cropY}`,
       '-c:v', 'libx264',
       '-c:a', 'aac',
       '-y',
@@ -79,6 +91,8 @@ export class VideoProcessor {
   async processMultipleAnnotations(
     videoFile: File,
     annotations: Annotation[],
+    canvasResolution: { width: number; height: number },
+    videoResolution: { width: number; height: number },
     onProgress?: (progress: number, currentIndex: number) => void
   ): Promise<{ filename: string; blob: Blob }[]> {
     const results: { filename: string; blob: Blob }[] = [];
@@ -90,7 +104,7 @@ export class VideoProcessor {
         onProgress((i / annotations.length) * 100, i);
       }
 
-      const blob = await this.processAnnotation(videoFile, annotation);
+      const blob = await this.processAnnotation(videoFile, annotation, canvasResolution,videoResolution);
       results.push({
         filename: annotation.filename,
         blob

@@ -13,6 +13,14 @@ interface VideoPlayerProps {
   onDurationChange: (duration: number) => void;
   isPlaying: boolean;
   onPlayStateChange: (playing: boolean) => void;
+  // Props
+  onResolutionChange?: (res: {
+    videoWidth: number;
+    videoHeight: number;
+    canvasWidth: number;
+    canvasHeight: number;
+  }) => void;
+
 }
 
 interface DragState {
@@ -31,11 +39,13 @@ export const VideoPlayer = ({
   onTimeUpdate,
   onDurationChange,
   isPlaying,
-  onPlayStateChange
+  onPlayStateChange,
+  onResolutionChange
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
+  const [videoResolution, setVideoResolution] = useState<{ width: number, height: number }>({ width: 0, height: 0 });
   const [dragState, setDragState] = useState<DragState>({
     isDragging: false,
     isResizing: false,
@@ -51,6 +61,13 @@ export const VideoPlayer = ({
     const handleLoadedMetadata = () => {
       onDurationChange(video.duration);
       setVideoSize({ width: video.videoWidth, height: video.videoHeight });
+    
+      onResolutionChange?.({
+        videoWidth: video.videoWidth,
+        videoHeight: video.videoHeight,
+        canvasWidth: video.clientWidth,
+        canvasHeight: video.clientHeight,
+      });
     };
 
     const handleTimeUpdate = () => {
