@@ -17,6 +17,8 @@ interface AnnotationPanelProps {
   onDeleteAnnotation: (id: string) => void;
   onSelectAnnotation?: (annotation: Annotation) => void;
   selectedAnnotation?: string | null;
+  startIndex: number;
+  setStartIndex: (val: number) => void;
 }
 
 export const AnnotationPanel = ({
@@ -28,7 +30,9 @@ export const AnnotationPanel = ({
   annotations,
   onDeleteAnnotation,
   onSelectAnnotation,
-  selectedAnnotation
+  selectedAnnotation,
+  startIndex,
+  setStartIndex
 }: AnnotationPanelProps) => {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -93,6 +97,18 @@ export const AnnotationPanel = ({
               className="w-full"
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="startIndex">Start Index</Label>
+            <Input
+              id="startIndex"
+              type="number"
+              min={0}
+              placeholder="0"
+              onChange={(e) => setStartIndex(Number(e.target.value))}
+              className="w-full"
+            />
+          </div>
+
           
           <Button 
             onClick={onAddAnnotation}

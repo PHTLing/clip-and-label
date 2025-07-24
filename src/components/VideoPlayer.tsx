@@ -59,20 +59,31 @@ export const VideoPlayer = ({
     if (!video) return;
 
     const handleLoadedMetadata = () => {
-      onDurationChange(video.duration);
-      // setVideoSize({ width: video.videoWidth, height: video.videoHeight });
-      const bounding = containerRef.current?.getBoundingClientRect();
-      if (!bounding) return;
+      const width = video.videoWidth;
+      const height = video.videoHeight;
 
-      console.log("videoResolution:", video.videoWidth, video.videoHeight);
-      console.log("canvasResolution:", bounding.width, bounding.height);
+      setVideoResolution({ width, height });
 
       onResolutionChange?.({
-        videoWidth: video.videoWidth,
-        videoHeight: video.videoHeight,
-        canvasWidth: bounding.width,
-        canvasHeight: bounding.height,
+        videoWidth: width,
+        videoHeight: height,
+        canvasWidth: width,
+        canvasHeight: height,
       });
+      onDurationChange(video.duration);
+      // // setVideoSize({ width: video.videoWidth, height: video.videoHeight });
+      // const bounding = containerRef.current?.getBoundingClientRect();
+      // if (!bounding) return;
+
+      // console.log("videoResolution:", video.videoWidth, video.videoHeight);
+      // console.log("canvasResolution:", bounding.width, bounding.height);
+
+      // onResolutionChange?.({
+      //   videoWidth: video.videoWidth,
+      //   videoHeight: video.videoHeight,
+      //   canvasWidth: bounding.width,
+      //   canvasHeight: bounding.height,
+      // });
     };
 
     const handleTimeUpdate = () => {
@@ -227,12 +238,18 @@ export const VideoPlayer = ({
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-          style={{ cursor: dragState.isDragging ? 'grabbing' : 'default' }}
+          style={{
+            width: `${videoResolution.width}px`,
+            height: `${videoResolution.height}px`,
+            cursor: dragState.isDragging ? 'grabbing' : 'default'
+          }}
         >
           <video
             ref={videoRef}
             src={videoUrl}
-            className="w-full max-h-[500px] object-contain"
+            width={videoResolution.width}
+            height={videoResolution.height}
+            style={{ display: 'block' }}
             onContextMenu={e => e.preventDefault()}
           />
           

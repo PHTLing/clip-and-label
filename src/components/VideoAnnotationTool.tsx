@@ -38,6 +38,7 @@ export const VideoAnnotationTool = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [cropArea, setCropArea] = useState<CropArea>({ x: 50, y: 50, width: 300, height: 200 });
   const [timeRange, setTimeRange] = useState<TimeRange>({ start: 0, end: 5 });
+  const [startIndex, setStartIndex] = useState<number>(0);
   const [resolutionInfo, setResolutionInfo] = useState<{
     videoWidth: number;
     videoHeight: number;
@@ -132,10 +133,9 @@ export const VideoAnnotationTool = () => {
   }, []);
 
   const generateFilename = useCallback((label: string, index: number) => {
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-    const cleanLabel = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-    return `clip_${timestamp}_${cleanLabel || 'unlabeled'}_${index + 1}.mp4`;
-  }, []);
+    const number = (startIndex + index).toString().padStart(4, '0');
+    return `VTV${number}.mp4`;
+  }, [startIndex]);
 
   const handleAddAnnotation = useCallback(() => {
     if (!currentLabel.trim()) {
@@ -375,6 +375,8 @@ export const VideoAnnotationTool = () => {
                 onDeleteAnnotation={handleDeleteAnnotation}
                 onSelectAnnotation={handleSelectAnnotation}
                 selectedAnnotation={selectedAnnotation}
+                startIndex={startIndex}
+                setStartIndex={setStartIndex}
               />
               
               <ExportManager
