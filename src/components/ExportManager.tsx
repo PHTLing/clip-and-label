@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Download, FileSpreadsheet, Video, Package } from "lucide-react";
 import { toast } from "sonner";
 import { videoProcessor } from "@/lib/videoProcessor";
@@ -61,6 +62,8 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
     setExportProgress(0);
 
     try {
+      toast("Initializing FFmpeg...", { description: "This may take a moment on first use" });
+      
       // Process all annotations into video clips
       const results = await videoProcessor.processMultipleAnnotations(
         videoFile,
@@ -73,27 +76,39 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
         }
       );
 
-      // Download all processed videos
-      for (const result of results) {
+      // Download all processed videos with a small delay between downloads
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        
+        // Create download link
         const link = document.createElement('a');
         const url = URL.createObjectURL(result.blob);
         
-        link.setAttribute('href', url);
-        link.setAttribute('download', result.filename);
-        link.style.visibility = 'hidden';
+        link.href = url;
+        link.download = result.filename;
+        link.style.display = 'none';
         
+        // Trigger download
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         
-        URL.revokeObjectURL(url);
+        // Clean up URL and add small delay
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        
+        // Small delay between downloads to avoid browser blocking
+        if (i < results.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
 
-      toast(`Successfully exported ${results.length} video clips!`);
+      toast(`Successfully exported ${results.length} video clips!`, { 
+        description: "Check your downloads folder" 
+      });
     } catch (error) {
       console.error('Video processing error:', error);
       toast("Video processing failed", { 
-        description: "Please check console for details" 
+        description: error instanceof Error ? error.message : "Unknown error occurred" 
       });
     } finally {
       setIsExporting(false);
@@ -194,23 +209,41 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
             Download Excel Only
           </Button>
           
-          <Button
-            onClick={exportAll}
-            className="w-full shadow-glow"
-            disabled={annotations.length === 0 || isExporting || !videoFile}
-          >
-            {isExporting ? (
-              <>
-                <Video className="w-4 h-4 mr-2 animate-pulse" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Download className="w-4 h-4 mr-2" />
-                Export All
-              </>
-            )}
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                className="w-full shadow-glow"
+                disabled={annotations.length === 0 || isExporting || !videoFile}
+              >
+                {isExporting ? (
+                  <>
+                    <Video className="w-4 h-4 mr-2 animate-pulse" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-2" />
+                    Export All
+                  </>
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirm Export</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will process and download {annotations.length} video clips plus metadata Excel file. 
+                  The process may take several minutes depending on clip length and complexity.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={exportAll}>
+                  Start Export
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
 
         {/* Export Info */}

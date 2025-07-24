@@ -5,6 +5,7 @@ import { AnnotationPanel } from "./AnnotationPanel";
 import { ExportManager } from "./ExportManager";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Upload, Video, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,6 +42,8 @@ export const VideoAnnotationTool = () => {
   const [currentLabel, setCurrentLabel] = useState<string>("");
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [selectedAnnotation, setSelectedAnnotation] = useState<string | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -62,6 +65,17 @@ export const VideoAnnotationTool = () => {
       return;
     }
 
+    // Check if there are existing annotations
+    if (annotations.length > 0) {
+      setPendingFile(file);
+      setShowConfirmDialog(true);
+      return;
+    }
+
+    await loadNewVideo(file);
+  }, [annotations.length]);
+
+  const loadNewVideo = useCallback(async (file: File) => {
     setIsUploading(true);
     try {
       const url = URL.createObjectURL(file);
@@ -73,6 +87,7 @@ export const VideoAnnotationTool = () => {
       setTimeRange({ start: 0, end: 5 });
       setAnnotations([]);
       setCurrentLabel("");
+      setSelectedAnnotation(null);
       
       toast("Video loaded successfully!", { 
         description: `${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)` 
@@ -81,6 +96,23 @@ export const VideoAnnotationTool = () => {
       toast("Failed to load video", { description: "Please try again" });
     } finally {
       setIsUploading(false);
+    }
+  }, []);
+
+  const handleConfirmNewVideo = useCallback(async () => {
+    if (pendingFile) {
+      await loadNewVideo(pendingFile);
+      setPendingFile(null);
+    }
+    setShowConfirmDialog(false);
+  }, [pendingFile, loadNewVideo]);
+
+  const handleCancelNewVideo = useCallback(() => {
+    setPendingFile(null);
+    setShowConfirmDialog(false);
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   }, []);
 
@@ -188,6 +220,19 @@ export const VideoAnnotationTool = () => {
       }
     }
   }, [videoFile]);
+
+  // Prevent accidental page leave
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (annotations.length > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [annotations.length]);
 
   // Cleanup video URL when component unmounts
   useEffect(() => {
@@ -327,6 +372,27 @@ export const VideoAnnotationTool = () => {
             </div>
           </div>
         )}
+
+        {/* Confirmation Dialog */}
+        <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Replace current video?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You have {annotations.length} unsaved annotations. Loading a new video will remove all current annotations. 
+                Make sure to export your work first if you want to keep it.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleCancelNewVideo}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmNewVideo}>
+                Replace Video
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
