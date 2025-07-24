@@ -50,19 +50,33 @@ export class VideoProcessor {
 
     const { timeRange, cropArea } = annotation;
 
+    if (!videoResolution || !canvasResolution || !canvasResolution.width || !canvasResolution.height) {
+      throw new Error('Missing resolution info');
+    }
+    // Calculate scale factors
     const scaleX = videoResolution.width / canvasResolution.width;
     const scaleY = videoResolution.height / canvasResolution.height;
 
-    const cropX = Math.round(cropArea.x * scaleX);
-    const cropY = Math.round(cropArea.y * scaleY);
-    const cropW = Math.round(cropArea.width * scaleX);
-    const cropH = Math.round(cropArea.height * scaleY);
+        // Đảm bảo crop không vượt quá biên
+    const cropX = Math.floor(Math.max(0, Math.min(cropArea.x * scaleX, videoResolution.width - 1)));
+    const cropY = Math.floor(Math.max(0, Math.min(cropArea.y * scaleY, videoResolution.height - 1)));
+    const cropW = Math.floor(Math.min(cropArea.width * scaleX, videoResolution.width - cropX));
+    const cropH = Math.floor(Math.min(cropArea.height * scaleY, videoResolution.height - cropY));
     
     // FFmpeg command to crop and trim video
     const duration = timeRange.end - timeRange.start;
-    
-    
-    
+    console.log('Debug Final Crop:', {
+      scaleX, scaleY,
+      cropArea,
+      cropX, cropY, cropW, cropH,
+      videoResolution,
+      canvasResolution,
+    });
+    const ratioCanvas = canvasResolution.width / canvasResolution.height;
+    const ratioVideo = videoResolution.width / videoResolution.height;
+
+    console.log("Aspect check", { ratioCanvas, ratioVideo });
+
     await this.ffmpeg.exec([
       '-i', 'input.mp4',
       '-ss', timeRange.start.toString(),

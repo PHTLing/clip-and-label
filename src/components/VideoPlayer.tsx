@@ -60,13 +60,18 @@ export const VideoPlayer = ({
 
     const handleLoadedMetadata = () => {
       onDurationChange(video.duration);
-      setVideoSize({ width: video.videoWidth, height: video.videoHeight });
-    
+      // setVideoSize({ width: video.videoWidth, height: video.videoHeight });
+      const bounding = containerRef.current?.getBoundingClientRect();
+      if (!bounding) return;
+
+      console.log("videoResolution:", video.videoWidth, video.videoHeight);
+      console.log("canvasResolution:", bounding.width, bounding.height);
+
       onResolutionChange?.({
         videoWidth: video.videoWidth,
         videoHeight: video.videoHeight,
-        canvasWidth: video.clientWidth,
-        canvasHeight: video.clientHeight,
+        canvasWidth: bounding.width,
+        canvasHeight: bounding.height,
       });
     };
 
