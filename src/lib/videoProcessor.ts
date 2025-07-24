@@ -13,19 +13,25 @@ export class VideoProcessor {
   async load() {
     if (this.isLoaded) return;
 
-    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-    
-    this.ffmpeg.on('log', ({ message }) => {
-      console.log(message);
-    });
+    try {
+      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+      
+      this.ffmpeg.on('log', ({ message }) => {
+        console.log(message);
+      });
 
-    // Load FFmpeg
-    await this.ffmpeg.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-    });
+      // Load FFmpeg with proper URLs
+      await this.ffmpeg.load({
+        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        workerURL: await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript'),
+      });
 
-    this.isLoaded = true;
+      this.isLoaded = true;
+    } catch (error) {
+      console.error('Failed to load FFmpeg:', error);
+      throw error;
+    }
   }
 
   async processAnnotation(
