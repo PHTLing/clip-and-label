@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Download, FileSpreadsheet, Video, Package } from "lucide-react";
 import { toast } from "sonner";
+import { videoProcessor } from "@/lib/videoProcessor";
 
 interface ExportManagerProps {
   annotations: Annotation[];
@@ -53,24 +54,52 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
     toast("Excel file downloaded successfully!");
   }, [generateExcelData]);
 
-  const simulateVideoProcessing = useCallback(async () => {
+  const processVideos = useCallback(async () => {
+    if (!videoFile) return;
+
     setIsExporting(true);
     setExportProgress(0);
 
-    // Simulate processing each annotation
-    for (let i = 0; i < annotations.length; i++) {
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setExportProgress(((i + 1) / annotations.length) * 100);
+    try {
+      // Process all annotations into video clips
+      const results = await videoProcessor.processMultipleAnnotations(
+        videoFile,
+        annotations,
+        (progress, currentIndex) => {
+          setExportProgress(progress);
+          if (currentIndex >= 0) {
+            toast(`Processing clip ${currentIndex + 1}/${annotations.length}...`);
+          }
+        }
+      );
+
+      // Download all processed videos
+      for (const result of results) {
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(result.blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', result.filename);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        URL.revokeObjectURL(url);
+      }
+
+      toast(`Successfully exported ${results.length} video clips!`);
+    } catch (error) {
+      console.error('Video processing error:', error);
+      toast("Video processing failed", { 
+        description: "Please check console for details" 
+      });
+    } finally {
+      setIsExporting(false);
+      setExportProgress(0);
     }
-
-    // Simulate final packaging
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setIsExporting(false);
-    setExportProgress(0);
-
-    toast("Video processing completed! (Demo mode)");
-  }, [annotations.length]);
+  }, [videoFile, annotations]);
 
   const exportAll = useCallback(async () => {
     if (annotations.length === 0) {
@@ -82,8 +111,8 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
       // Download Excel first
       downloadExcel();
       
-      // Then simulate video processing
-      await simulateVideoProcessing();
+      // Then process videos
+      await processVideos();
       
       toast("Export completed successfully!");
     } catch (error) {
@@ -91,7 +120,7 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
       setIsExporting(false);
       setExportProgress(0);
     }
-  }, [annotations.length, downloadExcel, simulateVideoProcessing]);
+  }, [annotations.length, downloadExcel, processVideos]);
 
   const getTotalDuration = useCallback(() => {
     return annotations.reduce((sum, ann) => sum + (ann.timeRange.end - ann.timeRange.start), 0);
@@ -194,12 +223,12 @@ export const ExportManager = ({ annotations, videoFile }: ExportManagerProps) =>
           )}
         </div>
 
-        {/* Demo Notice */}
+        {/* Processing Notice */}
         <div className="p-3 bg-gradient-accent border border-accent/30 rounded-lg">
           <div className="text-xs text-accent-foreground space-y-1">
-            <div><strong>✨ Demo Mode:</strong> Video processing is simulated for demonstration.</div>
-            <div>🔧 <strong>Production:</strong> Would use FFmpeg.js or server-side processing for real video cropping.</div>
-            <div>💾 <strong>Export:</strong> Downloads metadata CSV and simulates video generation.</div>
+            <div><strong>🎬 Video Processing:</strong> Real video cropping and trimming with FFmpeg.js</div>
+            <div>💾 <strong>Output:</strong> Downloads CSV metadata + individual MP4 clips</div>
+            <div>⚡ <strong>Performance:</strong> Processing happens in your browser - no server required</div>
           </div>
         </div>
       </div>

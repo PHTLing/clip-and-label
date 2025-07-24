@@ -1,0 +1,110 @@
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import { Annotation } from '@/components/VideoAnnotationTool';
+
+export class VideoProcessor {
+  private ffmpeg: FFmpeg;
+  private isLoaded = false;
+
+  constructor() {
+    this.ffmpeg = new FFmpeg();
+  }
+
+  async load() {
+    if (this.isLoaded) return;
+
+    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+    
+    this.ffmpeg.on('log', ({ message }) => {
+      console.log(message);
+    });
+
+    // Load FFmpeg
+    await this.ffmpeg.load({
+      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+    });
+
+    this.isLoaded = true;
+  }
+
+  async processAnnotation(
+    videoFile: File, 
+    annotation: Annotation, 
+    onProgress?: (progress: number) => void
+  ): Promise<Blob> {
+    if (!this.isLoaded) {
+      await this.load();
+    }
+
+    // Write video file to FFmpeg
+    await this.ffmpeg.writeFile('input.mp4', await fetchFile(videoFile));
+
+    const { timeRange, cropArea } = annotation;
+    
+    // FFmpeg command to crop and trim video
+    const duration = timeRange.end - timeRange.start;
+    
+    await this.ffmpeg.exec([
+      '-i', 'input.mp4',
+      '-ss', timeRange.start.toString(),
+      '-t', duration.toString(),
+      '-filter:v', `crop=${Math.round(cropArea.width)}:${Math.round(cropArea.height)}:${Math.round(cropArea.x)}:${Math.round(cropArea.y)}`,
+      '-c:v', 'libx264',
+      '-c:a', 'aac',
+      '-y',
+      'output.mp4'
+    ]);
+
+    // Read the processed video
+    const data = await this.ffmpeg.readFile('output.mp4');
+    
+    // Clean up
+    await this.ffmpeg.deleteFile('input.mp4');
+    await this.ffmpeg.deleteFile('output.mp4');
+
+    if (onProgress) {
+      onProgress(100);
+    }
+
+    return new Blob([data], { type: 'video/mp4' });
+  }
+
+  async processMultipleAnnotations(
+    videoFile: File,
+    annotations: Annotation[],
+    onProgress?: (progress: number, currentIndex: number) => void
+  ): Promise<{ filename: string; blob: Blob }[]> {
+    const results: { filename: string; blob: Blob }[] = [];
+
+    for (let i = 0; i < annotations.length; i++) {
+      const annotation = annotations[i];
+      
+      if (onProgress) {
+        onProgress((i / annotations.length) * 100, i);
+      }
+
+      const blob = await this.processAnnotation(videoFile, annotation);
+      results.push({
+        filename: annotation.filename,
+        blob
+      });
+    }
+
+    if (onProgress) {
+      onProgress(100, annotations.length);
+    }
+
+    return results;
+  }
+
+  async terminate() {
+    if (this.isLoaded) {
+      await this.ffmpeg.terminate();
+      this.isLoaded = false;
+    }
+  }
+}
+
+// Singleton instance
+export const videoProcessor = new VideoProcessor();
