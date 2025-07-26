@@ -25,7 +25,7 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo }: Export
   const [exportProgress, setExportProgress] = useState(0);
 
   const generateExcelData = useCallback(() => {
-    const headers = ['Filename', 'Label', 'Start Time (s)', 'End Time (s)', 'Duration (s)', 'Crop X', 'Crop Y', 'Crop Width', 'Crop Height', 'Created At'];
+    const headers = ['ID_video', 'Meaning', 'Start Time (s)', 'End Time (s)', 'Duration (s)', 'Crop X', 'Crop Y', 'Crop Width', 'Crop Height', 'Created At'];
     const rows = annotations.map(annotation => [
       annotation.filename,
       annotation.label,

@@ -199,6 +199,14 @@ export const VideoAnnotationTool = () => {
             handleAddAnnotation();
           }
           break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          setCurrentTime((prev) => Math.max(0, prev - 1));
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          setCurrentTime((prev) => Math.min(duration, prev + 1));
+          break;
       }
     };
 
@@ -352,7 +360,15 @@ export const VideoAnnotationTool = () => {
                 isPlaying={isPlaying}
                 onPlayStateChange={setIsPlaying}
               />
-              
+              {/* Timeline Component */}
+              <div className="flex justify-center items-center gap-4 mt-2">
+                <Button variant="outline" size="sm" onClick={() => setCurrentTime(prev => Math.max(0, prev - 1))}>
+                  ⏪ -1s
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setCurrentTime(prev => Math.min(duration, prev + 1))}>
+                  +1s ⏩
+                </Button>
+              </div>
               <Timeline
                 duration={duration}
                 currentTime={currentTime}

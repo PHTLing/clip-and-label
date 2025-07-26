@@ -1,7 +1,18 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TimeRange, Annotation } from "./VideoAnnotationTool";
 import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
+
+function secondsToHMS(seconds: number) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  return { h, m, s };
+}
+
+function hmsToSeconds(h: number, m: number, s: number) {
+  return h * 3600 + m * 60 + s;
+}
 
 interface TimelineProps {
   duration: number;
@@ -18,13 +29,21 @@ export const Timeline = ({
   timeRange,
   onTimeRangeChange,
   onCurrentTimeChange,
-  annotations
+  annotations,
 }: TimelineProps) => {
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }, []);
+
+  const [startHMS, setStartHMS] = useState(secondsToHMS(timeRange.start));
+  const [endHMS, setEndHMS] = useState(secondsToHMS(timeRange.end));
+
+  useEffect(() => {
+    setStartHMS(secondsToHMS(timeRange.start));
+    setEndHMS(secondsToHMS(timeRange.end));
+  }, [timeRange]);
 
   const handleCurrentTimeChange = useCallback((value: number[]) => {
     onCurrentTimeChange(value[0]);
@@ -135,10 +154,10 @@ export const Timeline = ({
         </div>
 
         {/* Time Range Controls */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Start Time</label>
-            <div className="space-y-1">
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            {/* Start Time */}
+            <div>
+              <label className="text-sm font-medium">Start Time (H:M:S)</label>
               <Slider
                 value={[timeRange.start]}
                 onValueChange={handleStartTimeChange}
@@ -148,18 +167,57 @@ export const Timeline = ({
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{formatTime(timeRange.start)}</span>
-                <span>{formatTime(timeRange.end - timeRange.start)} duration</span>
+              </div>
+              <div className="mt-1 flex gap-2 justify-start">
+                <input
+                  type="number"
+                  value={startHMS.h}
+                  onChange={(e) => {
+                    const h = parseInt(e.target.value) || 0;
+                    const newTime = hmsToSeconds(h, startHMS.m, startHMS.s);
+                    if (newTime < timeRange.end - 1) {
+                      onTimeRangeChange({ ...timeRange, start: newTime });
+                    }
+                  }}
+                  className="w-14 p-1 rounded bg-muted text-white text-sm text-center"
+                  placeholder="hh"
+                />
+                <input
+                  type="number"
+                  value={startHMS.m}
+                  onChange={(e) => {
+                    const m = parseInt(e.target.value) || 0;
+                    const newTime = hmsToSeconds(startHMS.h, m, startHMS.s);
+                    if (newTime < timeRange.end - 1) {
+                      onTimeRangeChange({ ...timeRange, start: newTime });
+                    }
+                  }}
+                  className="w-14 p-1 rounded bg-muted text-white text-sm text-center"
+                  placeholder="mm"
+                />
+                <input
+                  type="number"
+                  value={startHMS.s}
+                  onChange={(e) => {
+                    const s = parseInt(e.target.value) || 0;
+                    const newTime = hmsToSeconds(startHMS.h, startHMS.m, s);
+                    if (newTime < timeRange.end - 1) {
+                      onTimeRangeChange({ ...timeRange, start: newTime });
+                    }
+                  }}
+                  className="w-14 p-1 rounded bg-muted text-white text-sm text-center"
+                  placeholder="ss"
+                />
               </div>
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium">End Time</label>
-            <div className="space-y-1">
+
+            {/* End Time */}
+            <div>
+              <label className="text-sm font-medium">End Time (H:M:S)</label>
               <Slider
                 value={[timeRange.end]}
                 onValueChange={handleEndTimeChange}
-                min={Math.max(0, timeRange.start + 0.1)}
+                min={Math.max(0, timeRange.start + 1)}
                 max={duration}
                 step={0.1}
                 className="w-full"
@@ -168,9 +226,50 @@ export const Timeline = ({
                 <span>{formatTime(timeRange.end)}</span>
                 <span>Max: {formatTime(duration)}</span>
               </div>
+              <div className="mt-1 flex gap-2 justify-start">
+                <input
+                  type="number"
+                  value={endHMS.h}
+                  onChange={(e) => {
+                    const h = parseInt(e.target.value) || 0;
+                    const newTime = hmsToSeconds(h, endHMS.m, endHMS.s);
+                    if (newTime > timeRange.start + 1) {
+                      onTimeRangeChange({ ...timeRange, end: newTime });
+                    }
+                  }}
+                  className="w-14 p-1 rounded bg-muted text-white text-sm text-center"
+                  placeholder="hh"
+                />
+                <input
+                  type="number"
+                  value={endHMS.m}
+                  onChange={(e) => {
+                    const m = parseInt(e.target.value) || 0;
+                    const newTime = hmsToSeconds(endHMS.h, m, endHMS.s);
+                    if (newTime > timeRange.start + 1) {
+                      onTimeRangeChange({ ...timeRange, end: newTime });
+                    }
+                  }}
+                  className="w-14 p-1 rounded bg-muted text-white text-sm text-center"
+                  placeholder="mm"
+                />
+                <input
+                  type="number"
+                  value={endHMS.s}
+                  onChange={(e) => {
+                    const s = parseInt(e.target.value) || 0;
+                    const newTime = hmsToSeconds(endHMS.h, endHMS.m, s);
+                    if (newTime > timeRange.start + 1) {
+                      onTimeRangeChange({ ...timeRange, end: newTime });
+                    }
+                  }}
+                  className="w-14 p-1 rounded bg-muted text-white text-sm text-center"
+                  placeholder="ss"
+                />
+              </div>
             </div>
           </div>
-        </div>
+
 
         {/* Annotation List */}
         {annotations.length > 0 && (
