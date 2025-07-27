@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { TimeRange, Annotation } from "./VideoAnnotationTool";
 import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
 
 function secondsToHMS(seconds: number) {
   const h = Math.floor(seconds / 3600);
@@ -154,8 +155,17 @@ export const Timeline = ({
         </div>
 
         {/* Time Range Controls */}
+          {/* Set start and end buttons */}
+            <div className="flex grid grid-cols-2 gap-4 mt-2">
+                <Button onClick={() => onTimeRangeChange({ ...timeRange, start: currentTime })}>
+                  Set Start
+                </Button>
+                <Button onClick={() => onTimeRangeChange({ ...timeRange, end: currentTime })}>
+                  Set End
+                </Button>
+              </div>
           <div className="grid grid-cols-2 gap-4 mt-2">
-            {/* Start Time */}
+            {/* Start Time
             <div className="flex flex-col space-y-4">
               <label className="text-sm font-medium">Start Time (H:M:S)</label>
               <Slider
@@ -212,7 +222,7 @@ export const Timeline = ({
               </div>
             </div>
 
-            {/* End Time */}
+            {/* End Time 
             <div className="flex flex-col space-y-4">
               <label className="text-sm font-medium">End Time (H:M:S)</label>
               <Slider
@@ -268,8 +278,8 @@ export const Timeline = ({
                   placeholder="ss"
                 />
               </div>
-            </div>
-          </div>
+            </div>*/}
+          </div> 
 
 
         {/* Annotation List */}

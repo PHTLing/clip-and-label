@@ -113,15 +113,7 @@ export const AnnotationPanel = ({
               className="w-full"
             />
           </div>
-          {/* <div className="space-y-2">
-            <Label htmlFor="postag">POS Tag (optional)</Label>
-            <Input
-              id="postag"
-              value={postag}
-              onChange={(e) => onPostagChange?.(e.target.value)}
-              placeholder="e.g. NNP, VB..."
-            />
-          </div> */}
+          
           <div className="space-y-2">
             <Label htmlFor="postag">POS Tag (optional)</Label>
             <select
