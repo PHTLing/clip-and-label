@@ -12,6 +12,7 @@ import { videoProcessor } from "@/lib/videoProcessor";
 interface ExportManagerProps {
   annotations: Annotation[];
   videoFile: File | null;
+  videoFileName: string;
   resolutionInfo: {
     videoWidth: number;
     videoHeight: number;
@@ -25,11 +26,12 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo }: Export
   const [exportProgress, setExportProgress] = useState(0);
 
   const generateExcelData = useCallback(() => {
-    const headers = ['ID_video', 'Meaning', 'Pos-tag', 'Start Time (s)', 'End Time (s)', 'Duration (s)', 'Crop X', 'Crop Y', 'Crop Width', 'Crop Height', 'Created At'];
+    const headers = ['ID_video', 'Meaning', 'Pos-tag', 'Video-File', 'Start Time (s)', 'End Time (s)', 'Duration (s)', 'Crop X', 'Crop Y', 'Crop Width', 'Crop Height', 'Created At'];
     const rows = annotations.map(annotation => [
       annotation.filename,
       annotation.label,
       annotation.postag || "",
+      videoFile?.name || "",
       annotation.timeRange.start.toFixed(2),
       annotation.timeRange.end.toFixed(2),
       (annotation.timeRange.end - annotation.timeRange.start).toFixed(2),

@@ -1,0 +1,86 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.app {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  text-align: center;
+  max-width: 500px;
+  width: 90%;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+h1 {
+  margin-bottom: 25px;
+  background: linear-gradient(to right, #6a11cb, #2575fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.upload-area {
+  margin-bottom: 20px;
+}
+
+input[type="file"] {
+  padding: 10px;
+  border: 2px dashed #aaa;
+  border-radius: 8px;
+  width: 100%;
+  cursor: pointer;
+  background-color: #f9f9f9;
+}
+
+button {
+  padding: 12px 20px;
+  background: linear-gradient(to right, #6a11cb, #2575fc);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+button:hover {
+  transform: scale(1.05);
+  background: linear-gradient(to right, #5b0ecc, #1e5fee);
+}
+
+a#downloadLink {
+  display: inline-block;
+  margin-top: 20px;
+  color: #1a73e8;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+a#downloadLink:hover {
+  text-decoration: underline;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -58,7 +58,7 @@ export const VideoAnnotationTool = () => {
   const [selectedAnnotation, setSelectedAnnotation] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -391,6 +391,7 @@ export const VideoAnnotationTool = () => {
                 annotations={annotations}
                 videoFile={videoFile}
                 resolutionInfo={resolutionInfo}
+                videoFileName={videoFile?.name || ""}
               />
             </div>
           </div>

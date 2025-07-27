@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSV Merger</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <h1>🧩 Gộp nhiều file CSV thành Excel</h1>
+
+    <div class="upload-area">
+      <input type="file" id="csvFiles" multiple accept=".csv">
+    </div>
+
+    <button id="processBtn">🔄 Chuyển đổi & Gộp File</button>
+
+    <a id="downloadLink" style="display: none;" download="merged_result.xlsx">⬇️ Tải về file kết quả</a>
+  </div>
+
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -19,6 +19,7 @@ interface AnnotationPanelProps {
   selectedAnnotation?: string | null;
   startIndex: number;
   postag?: string;
+  videoFileName?: string;
   onPostagChange?: (val: string) => void;
   setStartIndex: (val: number) => void;
 }
