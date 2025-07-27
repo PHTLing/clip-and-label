@@ -176,7 +176,7 @@ export const Timeline = ({
                   onChange={(e) => {
                     const h = parseInt(e.target.value) || 0;
                     const newTime = hmsToSeconds(h, startHMS.m, startHMS.s);
-                    if (newTime < timeRange.end - 1) {
+                    if (newTime < timeRange.end - 0.1) {
                       onTimeRangeChange({ ...timeRange, start: newTime });
                     }
                   }}
@@ -202,7 +202,7 @@ export const Timeline = ({
                   onChange={(e) => {
                     const s = parseInt(e.target.value) || 0;
                     const newTime = hmsToSeconds(startHMS.h, startHMS.m, s);
-                    if (newTime < timeRange.end - 1) {
+                    if (newTime < timeRange.end - 0.1) {
                       onTimeRangeChange({ ...timeRange, start: newTime });
                     }
                   }}
@@ -234,7 +234,7 @@ export const Timeline = ({
                   onChange={(e) => {
                     const h = parseInt(e.target.value) || 0;
                     const newTime = hmsToSeconds(h, endHMS.m, endHMS.s);
-                    if (newTime > timeRange.start + 1) {
+                    if (newTime > timeRange.start + 0.1) {
                       onTimeRangeChange({ ...timeRange, end: newTime });
                     }
                   }}
@@ -247,7 +247,7 @@ export const Timeline = ({
                   onChange={(e) => {
                     const m = parseInt(e.target.value) || 0;
                     const newTime = hmsToSeconds(endHMS.h, m, endHMS.s);
-                    if (newTime > timeRange.start + 1) {
+                    if (newTime > timeRange.start + 0.1) {
                       onTimeRangeChange({ ...timeRange, end: newTime });
                     }
                   }}
@@ -260,7 +260,7 @@ export const Timeline = ({
                   onChange={(e) => {
                     const s = parseInt(e.target.value) || 0;
                     const newTime = hmsToSeconds(endHMS.h, endHMS.m, s);
-                    if (newTime > timeRange.start + 1) {
+                    if (newTime > timeRange.start + 0.1) {
                       onTimeRangeChange({ ...timeRange, end: newTime });
                     }
                   }}
