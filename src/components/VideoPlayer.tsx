@@ -71,19 +71,6 @@ export const VideoPlayer = ({
         canvasHeight: height,
       });
       onDurationChange(video.duration);
-      // // setVideoSize({ width: video.videoWidth, height: video.videoHeight });
-      // const bounding = containerRef.current?.getBoundingClientRect();
-      // if (!bounding) return;
-
-      // console.log("videoResolution:", video.videoWidth, video.videoHeight);
-      // console.log("canvasResolution:", bounding.width, bounding.height);
-
-      // onResolutionChange?.({
-      //   videoWidth: video.videoWidth,
-      //   videoHeight: video.videoHeight,
-      //   canvasWidth: bounding.width,
-      //   canvasHeight: bounding.height,
-      // });
     };
 
     const handleTimeUpdate = () => {
@@ -228,89 +215,88 @@ export const VideoPlayer = ({
   }, [cropArea]);
 
   return (
-    <Card className="p-4 bg-video-bg border-border/50">
-      <div className="space-y-4">
-        {/* Video Container */}
+  <Card className="p-4 bg-video-bg border-border/50 flex flex-col items-center space-y-4">
+    {/* Video Container */}
+    <div 
+      className="flex justify-center items-center bg-black rounded-lg shadow-elegant overflow-hidden"
+      style={{ maxWidth: '100%', maxHeight: '80vh' }}
+    >
+      <div
+        ref={containerRef}
+        className="relative"
+        style={{
+          width: `${videoResolution.width}px`,
+          height: `${videoResolution.height}px`,
+          cursor: dragState.isDragging ? 'grabbing' : 'default'
+        }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <video
+          ref={videoRef}
+          src={videoUrl}
+          width={videoResolution.width}
+          height={videoResolution.height}
+          style={{ display: 'block' }}
+          onContextMenu={e => e.preventDefault()}
+        />
+
+        {/* Crop Overlay */}
         <div 
-          ref={containerRef}
-          className="relative bg-black rounded-lg overflow-hidden shadow-elegant"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+          className="absolute border-2 border-crop-overlay bg-crop-overlay/10"
           style={{
-            width: `${videoResolution.width}px`,
-            height: `${videoResolution.height}px`,
-            cursor: dragState.isDragging ? 'grabbing' : 'default'
+            left: cropArea.x,
+            top: cropArea.y,
+            width: cropArea.width,
+            height: cropArea.height,
+            cursor: 'grab'
           }}
         >
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            width={videoResolution.width}
-            height={videoResolution.height}
-            style={{ display: 'block' }}
-            onContextMenu={e => e.preventDefault()}
-          />
-          
-          {/* Crop Overlay */}
-          <div 
-            className="absolute border-2 border-crop-overlay bg-crop-overlay/10 backdrop-blur-sm"
-            style={{
-              left: cropArea.x,
-              top: cropArea.y,
-              width: cropArea.width,
-              height: cropArea.height,
-              cursor: 'grab'
-            }}
-          >
-            {/* Resize Handles */}
-            {['nw', 'ne', 'sw', 'se'].map(handle => (
-              <div
-                key={handle}
-                className="absolute w-3 h-3 bg-crop-overlay border border-background rounded-full"
-                style={{
-                  top: handle.includes('n') ? -6 : cropArea.height - 6,
-                  left: handle.includes('w') ? -6 : cropArea.width - 6,
-                  cursor: `${handle}-resize`
-                }}
-              />
-            ))}
-            
-            {/* Crop Info */}
-            <div className="absolute -top-8 left-0 bg-crop-overlay text-primary-foreground px-2 py-1 rounded text-xs">
-              {Math.round(cropArea.width)}×{Math.round(cropArea.height)}
-            </div>
-          </div>
-        </div>
+          {/* Resize Handles */}
+          {['nw', 'ne', 'sw', 'se'].map(handle => (
+            <div
+              key={handle}
+              className="absolute w-3 h-3 bg-crop-overlay border border-background rounded-full"
+              style={{
+                top: handle.includes('n') ? -6 : cropArea.height - 6,
+                left: handle.includes('w') ? -6 : cropArea.width - 6,
+                cursor: `${handle}-resize`
+              }}
+            />
+          ))}
 
-        {/* Video Controls */}
-        <div className="flex items-center justify-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={resetVideo}
-          >
-            <RotateCcw className="w-4 h-4" />
-          </Button>
-          
-          <Button
-            onClick={togglePlay}
-            size="lg"
-            className="shadow-glow"
-          >
-            {isPlaying ? (
-              <Pause className="w-6 h-6" />
-            ) : (
-              <Play className="w-6 h-6" />
-            )}
-          </Button>
-          
-          <div className="text-sm text-muted-foreground min-w-[100px] text-center">
-            {Math.floor(currentTime / 60)}:{(currentTime % 60).toFixed(1).padStart(4, '0')}
+          {/* Crop Info */}
+          <div className="absolute -top-8 left-0 bg-crop-overlay text-primary-foreground px-2 py-1 rounded text-xs">
+            {Math.round(cropArea.width)}×{Math.round(cropArea.height)}
           </div>
         </div>
       </div>
-    </Card>
-  );
+    </div>
+
+    {/* Video Controls */}
+    <div className="flex items-center justify-center gap-4 mt-2">
+      <Button variant="outline" size="sm" onClick={resetVideo}>
+        <RotateCcw className="w-4 h-4" />
+      </Button>
+      
+      <Button variant="outline" size="sm" onClick={() => onTimeUpdate(Math.max(currentTime - 1, 0))}>
+        ⏪ -1s
+      </Button>
+
+      <Button onClick={togglePlay} size="lg" className="shadow-glow">
+        {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+      </Button>
+
+      <Button variant="outline" size="sm" onClick={() => onTimeUpdate(Math.min(currentTime + 1, videoRef.current?.duration || 0))}>
+        +1s ⏩
+      </Button>
+
+      <div className="text-sm text-muted-foreground min-w-[100px] text-center">
+        {Math.floor(currentTime / 60)}:{(currentTime % 60).toFixed(1).padStart(4, '0')}
+      </div>
+    </div>
+  </Card>
+);
 };

@@ -24,6 +24,7 @@ export interface TimeRange {
 export interface Annotation {
   id: string;
   label: string;
+  postag?: string;
   cropArea: CropArea;
   timeRange: TimeRange;
   filename: string;
@@ -39,6 +40,7 @@ export const VideoAnnotationTool = () => {
   const [cropArea, setCropArea] = useState<CropArea>({ x: 50, y: 50, width: 300, height: 200 });
   const [timeRange, setTimeRange] = useState<TimeRange>({ start: 0, end: 5 });
   const [startIndex, setStartIndex] = useState<number>(0);
+  const [postag, setPostag] = useState<string>("");
   const [resolutionInfo, setResolutionInfo] = useState<{
     videoWidth: number;
     videoHeight: number;
@@ -151,6 +153,7 @@ export const VideoAnnotationTool = () => {
     const newAnnotation: Annotation = {
       id: Date.now().toString(),
       label: currentLabel.trim(),
+      postag: postag || undefined,
       cropArea: { ...cropArea },
       timeRange: { ...timeRange },
       filename: generateFilename(currentLabel, annotations.length),
@@ -292,12 +295,7 @@ export const VideoAnnotationTool = () => {
             </div>
           )}
           
-          {/* Keyboard shortcuts hint */}
-          {videoFile && (
-            <div className="text-xs text-muted-foreground bg-secondary/20 rounded-lg p-3 max-w-md mx-auto">
-              <strong>Shortcuts:</strong> Space = Play/Pause • R = Reset • Ctrl+Enter = Add Annotation
-            </div>
-          )}
+          
         </div>
 
         {/* Upload Section */}
@@ -361,14 +359,6 @@ export const VideoAnnotationTool = () => {
                 onPlayStateChange={setIsPlaying}
               />
               {/* Timeline Component */}
-              <div className="flex justify-center items-center gap-4 mt-2">
-                <Button variant="outline" size="sm" onClick={() => setCurrentTime(prev => Math.max(0, prev - 1))}>
-                  ⏪ -1s
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setCurrentTime(prev => Math.min(duration, prev + 1))}>
-                  +1s ⏩
-                </Button>
-              </div>
               <Timeline
                 duration={duration}
                 currentTime={currentTime}
@@ -393,6 +383,8 @@ export const VideoAnnotationTool = () => {
                 selectedAnnotation={selectedAnnotation}
                 startIndex={startIndex}
                 setStartIndex={setStartIndex}
+                postag={postag}
+                onPostagChange={setPostag}  
               />
               
               <ExportManager

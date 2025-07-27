@@ -18,6 +18,8 @@ interface AnnotationPanelProps {
   onSelectAnnotation?: (annotation: Annotation) => void;
   selectedAnnotation?: string | null;
   startIndex: number;
+  postag?: string;
+  onPostagChange?: (val: string) => void;
   setStartIndex: (val: number) => void;
 }
 
@@ -32,7 +34,9 @@ export const AnnotationPanel = ({
   onSelectAnnotation,
   selectedAnnotation,
   startIndex,
-  setStartIndex
+  setStartIndex,
+  postag,
+  onPostagChange
 }: AnnotationPanelProps) => {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -82,6 +86,18 @@ export const AnnotationPanel = ({
         </div>
       </Card>
 
+      {/* Start Index */}
+      <div className="space-y-2">
+            <Label htmlFor="startIndex">Start Index</Label>
+            <Input
+              id="startIndex"
+              type="number"
+              min={0}
+              placeholder="0"
+              onChange={(e) => setStartIndex(Number(e.target.value))}
+              className="w-full"
+            />
+          </div>
       {/* Add Annotation */}
       <Card className="p-4">
         <div className="space-y-4">
@@ -97,19 +113,45 @@ export const AnnotationPanel = ({
               className="w-full"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="startIndex">Start Index</Label>
+          {/* <div className="space-y-2">
+            <Label htmlFor="postag">POS Tag (optional)</Label>
             <Input
-              id="startIndex"
-              type="number"
-              min={0}
-              placeholder="0"
-              onChange={(e) => setStartIndex(Number(e.target.value))}
-              className="w-full"
+              id="postag"
+              value={postag}
+              onChange={(e) => onPostagChange?.(e.target.value)}
+              placeholder="e.g. NNP, VB..."
             />
+          </div> */}
+          <div className="space-y-2">
+            <Label htmlFor="postag">POS Tag (optional)</Label>
+            <select
+              id="postag"
+              value={postag}
+              onChange={(e) => onPostagChange?.(e.target.value)}
+              className="w-full p-2 rounded bg-muted text-white text-sm"
+            >
+              <option value="">-- Không chọn --</option>
+              <option value="N">N — Danh từ chung</option>
+              <option value="Np">Np — Danh từ riêng</option>
+              <option value="V">V — Động từ chính</option>
+              <option value="A">A — Tính từ</option>
+              <option value="P">P — Đại từ</option>
+              <option value="R">R — Trạng từ</option>
+              <option value="L">L — Mạo từ</option>
+              <option value="M">M — Số từ</option>
+              <option value="E">E — Giới từ</option>
+              <option value="C">C — Liên từ</option>
+              <option value="T">T — Trợ từ, tiểu từ</option>
+              <option value="I">I — Thán từ</option>
+              <option value="Y">Y — Từ cảm thán</option>
+              <option value="X">X — Từ không phân loại</option>
+              <option value="CH">CH — Từ chỉ định</option>
+              <option value="B">B — Giới từ bổ nghĩa</option>
+              <option value="Z">Z — Dấu câu</option>
+            </select>
           </div>
 
-          
+                    
           <Button 
             onClick={onAddAnnotation}
             className="w-full shadow-glow"

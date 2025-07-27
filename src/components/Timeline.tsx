@@ -156,7 +156,7 @@ export const Timeline = ({
         {/* Time Range Controls */}
           <div className="grid grid-cols-2 gap-4 mt-2">
             {/* Start Time */}
-            <div>
+            <div className="flex flex-col space-y-4">
               <label className="text-sm font-medium">Start Time (H:M:S)</label>
               <Slider
                 value={[timeRange.start]}
@@ -167,6 +167,7 @@ export const Timeline = ({
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{formatTime(timeRange.start)}</span>
+                <span>Max: {formatTime(timeRange.end - 0.1)}</span>
               </div>
               <div className="mt-1 flex gap-2 justify-start">
                 <input
@@ -212,7 +213,7 @@ export const Timeline = ({
             </div>
 
             {/* End Time */}
-            <div>
+            <div className="flex flex-col space-y-4">
               <label className="text-sm font-medium">End Time (H:M:S)</label>
               <Slider
                 value={[timeRange.end]}

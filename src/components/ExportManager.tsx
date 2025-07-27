@@ -25,10 +25,11 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo }: Export
   const [exportProgress, setExportProgress] = useState(0);
 
   const generateExcelData = useCallback(() => {
-    const headers = ['ID_video', 'Meaning', 'Start Time (s)', 'End Time (s)', 'Duration (s)', 'Crop X', 'Crop Y', 'Crop Width', 'Crop Height', 'Created At'];
+    const headers = ['ID_video', 'Meaning', 'Pos-tag', 'Start Time (s)', 'End Time (s)', 'Duration (s)', 'Crop X', 'Crop Y', 'Crop Width', 'Crop Height', 'Created At'];
     const rows = annotations.map(annotation => [
       annotation.filename,
       annotation.label,
+      annotation.postag || "",
       annotation.timeRange.start.toFixed(2),
       annotation.timeRange.end.toFixed(2),
       (annotation.timeRange.end - annotation.timeRange.start).toFixed(2),
@@ -46,7 +47,10 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo }: Export
     const data = generateExcelData();
     const csvContent = data.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
     
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const bom = "\uFEFF"; // Byte Order Mark cho UTF-8
+    const csvWithBom = bom + csvContent;
+    const csvBlob = new Blob([csvWithBom], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csvBlob], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     
