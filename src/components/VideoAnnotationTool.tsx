@@ -29,6 +29,7 @@ export interface Annotation {
   timeRange: TimeRange;
   filename: string;
   createdAt: Date;
+  sideView: boolean;
 }
 
 export const VideoAnnotationTool = () => {
@@ -54,6 +55,7 @@ export const VideoAnnotationTool = () => {
   });
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [currentLabel, setCurrentLabel] = useState<string>("");
+  const [currentSideView, setCurrentSideView] = useState<boolean>(false);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [selectedAnnotation, setSelectedAnnotation] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
@@ -159,13 +161,15 @@ export const VideoAnnotationTool = () => {
                 label: currentLabel.trim(),
                 postag: postag || undefined,
                 cropArea: { ...cropArea },
-                timeRange: { ...timeRange }
+                timeRange: { ...timeRange },
+                sideView: currentSideView
               }
             : ann
         )
       );
       setSelectedAnnotation(null);
       setCurrentLabel("");
+      setCurrentSideView(false);
       toast("Annotation updated successfully!", { 
         description: `Updated: ${currentLabel.trim()}` 
       });
@@ -177,11 +181,13 @@ export const VideoAnnotationTool = () => {
         cropArea: { ...cropArea },
         timeRange: { ...timeRange },
         filename: generateFilename(currentLabel, annotations.length),
-        createdAt: new Date()
+        createdAt: new Date(),
+        sideView: currentSideView
       };
 
       setAnnotations(prev => [...prev, newAnnotation]);
       setCurrentLabel("");
+      setCurrentSideView(false);
       toast("Annotation added successfully!", { 
         description: `Label: ${newAnnotation.label}` 
       });
@@ -200,6 +206,7 @@ export const VideoAnnotationTool = () => {
     setTimeRange(annotation.timeRange);
     setCurrentTime(annotation.timeRange.start);
     setCurrentLabel(annotation.label);
+    setCurrentSideView(annotation.sideView || false);
     toast("Annotation selected", { description: `Jumped to: ${annotation.label}` });
   }, []);
 
@@ -405,7 +412,9 @@ export const VideoAnnotationTool = () => {
                 startIndex={startIndex}
                 setStartIndex={setStartIndex}
                 postag={postag}
-                onPostagChange={setPostag}  
+                onPostagChange={setPostag}
+                sideView={currentSideView}
+                onSideViewChange={setCurrentSideView}
               />
               
               <ExportManager

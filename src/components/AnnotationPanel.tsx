@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, Edit3, Clock, Scissors } from "lucide-react";
 
 interface AnnotationPanelProps {
@@ -22,6 +23,8 @@ interface AnnotationPanelProps {
   videoFileName?: string;
   onPostagChange?: (val: string) => void;
   setStartIndex: (val: number) => void;
+  sideView: boolean;
+  onSideViewChange: (val: boolean) => void;
 }
 
 export const AnnotationPanel = ({
@@ -37,7 +40,9 @@ export const AnnotationPanel = ({
   startIndex,
   setStartIndex,
   postag,
-  onPostagChange
+  onPostagChange,
+  sideView,
+  onSideViewChange
 }: AnnotationPanelProps) => {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -143,8 +148,16 @@ export const AnnotationPanel = ({
             </select>
           </div>
 
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="sideView" 
+              checked={sideView}
+              onCheckedChange={(checked) => onSideViewChange(!!checked)}
+            />
+            <Label htmlFor="sideView" className="text-sm">Side view</Label>
+          </div>
                     
-          <Button 
+          <Button
             onClick={onAddAnnotation}
             className="w-full shadow-glow"
             disabled={!label.trim()}
