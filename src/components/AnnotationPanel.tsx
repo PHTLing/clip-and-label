@@ -24,7 +24,7 @@ interface AnnotationPanelProps {
   onPostagChange?: (val: string) => void;
   setStartIndex: (val: number) => void;
   sideView: boolean;
-  onSideViewChange: (val: boolean) => void;
+  onSideViewChange?: (val: boolean) => void;
 }
 
 export const AnnotationPanel = ({
@@ -44,6 +44,7 @@ export const AnnotationPanel = ({
   sideView,
   onSideViewChange
 }: AnnotationPanelProps) => {
+  console.log('AnnotationPanel props:', { sideView, onSideViewChange: typeof onSideViewChange });
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -153,7 +154,6 @@ export const AnnotationPanel = ({
               id="sideView" 
               checked={sideView}
               onCheckedChange={(checked) => onSideViewChange(!!checked)}
-              className="h-4 w-4"
             />
             <Label htmlFor="sideView" className="text-sm">Side view</Label>
           </div>
