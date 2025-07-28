@@ -128,7 +128,7 @@ export const AnnotationPanel = ({
               onChange={(e) => onPostagChange?.(e.target.value)}
               className="w-full p-2 rounded bg-muted text-white text-sm"
             >
-              <option value="">Không</option>
+              <option value="">--Không chọn--</option>
               <option value="N">N — Danh từ chung</option>
               <option value="Np">Np — Danh từ riêng</option>
               <option value="V">V — Động từ chính</option>
