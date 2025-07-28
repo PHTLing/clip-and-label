@@ -24,7 +24,7 @@ export interface TimeRange {
 export interface Annotation {
   id: string;
   label: string;
-  postag?: string;
+  postag: string;
   cropArea: CropArea;
   timeRange: TimeRange;
   filename: string;
@@ -55,7 +55,7 @@ export const VideoAnnotationTool = () => {
   });
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [currentLabel, setCurrentLabel] = useState<string>("");
-  const [currentSideView, setCurrentSideView] = useState<boolean>(false);
+  const [sideView, setSideView] = useState<boolean>(false);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [selectedAnnotation, setSelectedAnnotation] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
@@ -153,6 +153,7 @@ export const VideoAnnotationTool = () => {
     }
     if (selectedAnnotation) {
       // Update existing annotation
+      console.log("DEBUG: sideView value when update annotation:", sideView);
       setAnnotations(prev =>
         prev.map(ann =>
           ann.id === selectedAnnotation
@@ -162,14 +163,14 @@ export const VideoAnnotationTool = () => {
                 postag: postag || undefined,
                 cropArea: { ...cropArea },
                 timeRange: { ...timeRange },
-                sideView: currentSideView
+                sideView: sideView
               }
             : ann
         )
       );
       setSelectedAnnotation(null);
       setCurrentLabel("");
-      setCurrentSideView(false);
+      setSideView(false);
       toast("Annotation updated successfully!", { 
         description: `Updated: ${currentLabel.trim()}` 
       });
@@ -182,17 +183,17 @@ export const VideoAnnotationTool = () => {
         timeRange: { ...timeRange },
         filename: generateFilename(currentLabel, annotations.length),
         createdAt: new Date(),
-        sideView: currentSideView
+        sideView: sideView
       };
-
+      console.log("DEBUG: sideView value when adding annotation:", sideView);
       setAnnotations(prev => [...prev, newAnnotation]);
       setCurrentLabel("");
-      setCurrentSideView(false);
+      setSideView(false);
       toast("Annotation added successfully!", { 
         description: `Label: ${newAnnotation.label}` 
       });
     }
-    }, [currentLabel, cropArea, timeRange, annotations.length, generateFilename]);
+    }, [currentLabel, cropArea, timeRange, annotations.length, generateFilename, selectedAnnotation, postag, sideView]);
 
   const handleDeleteAnnotation = useCallback((id: string) => {
     setAnnotations(prev => prev.filter(ann => ann.id !== id));
@@ -206,7 +207,8 @@ export const VideoAnnotationTool = () => {
     setTimeRange(annotation.timeRange);
     setCurrentTime(annotation.timeRange.start);
     setCurrentLabel(annotation.label);
-    setCurrentSideView(annotation.sideView || false);
+    setSideView(annotation.sideView || false);
+    setPostag(annotation.postag || "");
     toast("Annotation selected", { description: `Jumped to: ${annotation.label}` });
   }, []);
 
@@ -413,8 +415,8 @@ export const VideoAnnotationTool = () => {
                 setStartIndex={setStartIndex}
                 postag={postag}
                 onPostagChange={setPostag}
-                sideView={currentSideView}
-                onSideViewChange={setCurrentSideView}
+                sideView={sideView}
+                onSideViewChange={setSideView}
               />
               
               <ExportManager

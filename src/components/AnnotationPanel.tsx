@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, Edit3, Clock, Scissors } from "lucide-react";
+import { Plus, Trash2, Edit3, Clock, Scissors, Check, Tag, Eye } from "lucide-react";
 
 interface AnnotationPanelProps {
   label: string;
@@ -19,7 +19,7 @@ interface AnnotationPanelProps {
   onSelectAnnotation?: (annotation: Annotation) => void;
   selectedAnnotation?: string | null;
   startIndex: number;
-  postag?: string;
+  postag: string;
   videoFileName?: string;
   onPostagChange?: (val: string) => void;
   setStartIndex: (val: number) => void;
@@ -127,7 +127,7 @@ export const AnnotationPanel = ({
               onChange={(e) => onPostagChange?.(e.target.value)}
               className="w-full p-2 rounded bg-muted text-white text-sm"
             >
-              <option value="">-- Không chọn --</option>
+              <option value="">Không</option>
               <option value="N">N — Danh từ chung</option>
               <option value="Np">Np — Danh từ riêng</option>
               <option value="V">V — Động từ chính</option>
@@ -149,10 +149,11 @@ export const AnnotationPanel = ({
           </div>
 
           <div className="flex items-center space-x-2">
-            <Checkbox 
+            <Checkbox
               id="sideView" 
               checked={sideView}
               onCheckedChange={(checked) => onSideViewChange(!!checked)}
+              className="h-4 w-4"
             />
             <Label htmlFor="sideView" className="text-sm">Side view</Label>
           </div>
@@ -220,6 +221,18 @@ export const AnnotationPanel = ({
                           <div className="flex items-center gap-2">
                             <Scissors className="w-3 h-3" />
                             {formatDimensions(annotation.cropArea)}
+                          </div>
+
+                          {annotation.postag && (
+                            <div className="flex items-center gap-2">
+                              <Tag className="w-3 h-3 text-muted-foreground" />
+                              Tag: {annotation.postag}
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            <Eye className="w-3 h-3 text-muted-foreground" />
+                            View: {annotation.sideView ? "Side" : "Front"}
                           </div>
                         </div>
                       </div>
