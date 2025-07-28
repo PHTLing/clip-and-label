@@ -102,8 +102,7 @@ export const AnnotationPanel = ({
       {/* Add Annotation */}
       <Card className="p-4">
         <div className="space-y-4">
-          <h3 className="font-semibold">Add Annotation</h3>
-          
+          <h3 className="font-semibold">{selectedAnnotation ? 'Edit Annotation' : 'Add Annotation'}</h3>          
           <div className="space-y-2">
             <Label htmlFor="label">Label</Label>
             <Input
@@ -150,8 +149,17 @@ export const AnnotationPanel = ({
             className="w-full shadow-glow"
             disabled={!label.trim()}
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Annotation
+            {selectedAnnotation ? (
+              <>
+                <Edit3 className="w-4 h-4 mr-2" />
+                Update Annotation
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Annotation
+              </>
+            )}
           </Button>
         </div>
       </Card>

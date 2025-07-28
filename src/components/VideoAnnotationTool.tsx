@@ -149,23 +149,44 @@ export const VideoAnnotationTool = () => {
       toast("Invalid time range");
       return;
     }
+    if (selectedAnnotation) {
+      // Update existing annotation
+      setAnnotations(prev =>
+        prev.map(ann =>
+          ann.id === selectedAnnotation
+            ? {
+                ...ann,
+                label: currentLabel.trim(),
+                postag: postag || undefined,
+                cropArea: { ...cropArea },
+                timeRange: { ...timeRange }
+              }
+            : ann
+        )
+      );
+      setSelectedAnnotation(null);
+      setCurrentLabel("");
+      toast("Annotation updated successfully!", { 
+        description: `Updated: ${currentLabel.trim()}` 
+      });
+    } else {
+      const newAnnotation: Annotation = {
+        id: Date.now().toString(),
+        label: currentLabel.trim(),
+        postag: postag || undefined,
+        cropArea: { ...cropArea },
+        timeRange: { ...timeRange },
+        filename: generateFilename(currentLabel, annotations.length),
+        createdAt: new Date()
+      };
 
-    const newAnnotation: Annotation = {
-      id: Date.now().toString(),
-      label: currentLabel.trim(),
-      postag: postag || undefined,
-      cropArea: { ...cropArea },
-      timeRange: { ...timeRange },
-      filename: generateFilename(currentLabel, annotations.length),
-      createdAt: new Date()
-    };
-
-    setAnnotations(prev => [...prev, newAnnotation]);
-    setCurrentLabel("");
-    toast("Annotation added successfully!", { 
-      description: `Label: ${newAnnotation.label}` 
-    });
-  }, [currentLabel, cropArea, timeRange, annotations.length, generateFilename]);
+      setAnnotations(prev => [...prev, newAnnotation]);
+      setCurrentLabel("");
+      toast("Annotation added successfully!", { 
+        description: `Label: ${newAnnotation.label}` 
+      });
+    }
+    }, [currentLabel, cropArea, timeRange, annotations.length, generateFilename]);
 
   const handleDeleteAnnotation = useCallback((id: string) => {
     setAnnotations(prev => prev.filter(ann => ann.id !== id));
