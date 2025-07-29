@@ -3,6 +3,7 @@ import { VideoPlayer } from "./VideoPlayer";
 import { Timeline } from "./Timeline";
 import { AnnotationPanel } from "./AnnotationPanel";
 import { ExportManager } from "./ExportManager";
+import { ExcelUploader } from "./ExcelUploader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -215,6 +216,19 @@ export const VideoAnnotationTool = () => {
     toast("Annotation selected", { description: `Jumped to: ${annotation.label}` });
   }, []);
 
+  const handleAnnotationsLoaded = useCallback((loadedAnnotations: Annotation[]) => {
+    if (loadedAnnotations.length > 0) {
+      setAnnotations(loadedAnnotations);
+      setSelectedAnnotation(null);
+      setCurrentLabel("");
+      setSideView(false);
+      setPostag("");
+      toast("Annotations imported successfully!", { 
+        description: `Loaded ${loadedAnnotations.length} annotations` 
+      });
+    }
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -404,6 +418,11 @@ export const VideoAnnotationTool = () => {
 
             {/* Control Panel */}
             <div className="space-y-4">
+              <ExcelUploader
+                onAnnotationsLoaded={handleAnnotationsLoaded}
+                disabled={!videoFile}
+              />
+              
               <AnnotationPanel
                 label={currentLabel}
                 onLabelChange={setCurrentLabel}
