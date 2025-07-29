@@ -250,31 +250,31 @@ export const VideoAnnotationTool = () => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [handleAddAnnotation]);
 
-  // // Auto-save to localStorage
-  // useEffect(() => {
-  //   if (annotations.length > 0) {
-  //     localStorage.setItem('videoAnnotations', JSON.stringify(annotations));
-  //   }
-  // }, [annotations]);
+  // Auto-save to localStorage
+  useEffect(() => {
+    if (annotations.length > 0) {
+      localStorage.setItem('videoAnnotations', JSON.stringify(annotations));
+    }
+  }, [annotations]);
 
-  // // Load saved annotations
-  // useEffect(() => {
-  //   const saved = localStorage.getItem('videoAnnotations');
-  //   if (saved) {
-  //     try {
-  //       const parsed = JSON.parse(saved);
-  //       // Only load if we have a video file
-  //       if (videoFile && parsed.length > 0) {
-  //         setAnnotations(parsed.map((ann: any) => ({
-  //           ...ann,
-  //           createdAt: new Date(ann.createdAt)
-  //         })));
-  //       }
-  //     } catch (error) {
-  //       console.error('Failed to load saved annotations:', error);
-  //     }
-  //   }
-  // }, [videoFile]);
+  // Load saved annotations
+  useEffect(() => {
+    const saved = localStorage.getItem('videoAnnotations');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Only load if we have a video file
+        if (videoFile && parsed.length > 0) {
+          setAnnotations(parsed.map((ann: any) => ({
+            ...ann,
+            createdAt: new Date(ann.createdAt)
+          })));
+        }
+      } catch (error) {
+        console.error('Failed to load saved annotations:', error);
+      }
+    }
+  }, [videoFile]);
 
   // Prevent accidental page leave
   useEffect(() => {
