@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,16 @@ export const GoogleDriveConnector = ({ onFolderSelected, isConnected }: GoogleDr
   const [isConnecting, setIsConnecting] = useState(false);
   const [accessToken, setAccessToken] = useState<string>("");
   const [folderUrl, setFolderUrl] = useState<string>("");
+  const [isTokenValid, setIsTokenValid] = useState<boolean>(false);
+
+  // Check for existing token on mount
+  useEffect(() => {
+    const token = localStorage.getItem('gdrive_token');
+    if (token) {
+      setIsTokenValid(true);
+      setAccessToken(token);
+    }
+  }, []);
 
   const handleConnect = async () => {
     if (!accessToken.trim()) {
@@ -37,11 +47,14 @@ export const GoogleDriveConnector = ({ onFolderSelected, isConnected }: GoogleDr
 
       const data = await response.json();
       localStorage.setItem('gdrive_token', accessToken);
+      setIsTokenValid(true);
       
       toast("Connected to Google Drive successfully!", {
         description: `Welcome ${data.user.displayName}`
       });
     } catch (error) {
+      setIsTokenValid(false);
+      localStorage.removeItem('gdrive_token');
       toast("Failed to connect to Google Drive", {
         description: "Please check your access token"
       });
@@ -108,7 +121,7 @@ export const GoogleDriveConnector = ({ onFolderSelected, isConnected }: GoogleDr
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!isConnected ? (
+        {!isTokenValid ? (
           <>
             <div className="space-y-2">
               <Label htmlFor="access-token">Google Drive Access Token</Label>
