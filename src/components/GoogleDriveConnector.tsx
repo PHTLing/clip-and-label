@@ -182,13 +182,27 @@ export const GoogleDriveConnector = ({ onFolderSelected, isConnected }: GoogleDr
           <div className="flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
             <div className="text-xs text-blue-600 dark:text-blue-400">
-              <p className="font-medium mb-1">How to get access token:</p>
-              <ol className="list-decimal list-inside space-y-1">
-                <li>Visit OAuth 2.0 Playground</li>
-                <li>Select "Drive API v3" and authorize scopes</li>
-                <li>Exchange authorization code for tokens</li>
-                <li>Copy the access token</li>
-              </ol>
+              <p className="font-medium mb-1">Hướng dẫn:</p>
+              <div className="space-y-2">
+                <div>
+                  <p className="font-medium">1. Lấy Access Token:</p>
+                  <ol className="list-decimal list-inside space-y-1 ml-2">
+                    <li>Truy cập OAuth 2.0 Playground</li>
+                    <li>Chọn "Drive API v3" và authorize scopes</li>
+                    <li>Exchange authorization code for tokens</li>
+                    <li>Copy access token</li>
+                  </ol>
+                </div>
+                <div>
+                  <p className="font-medium">2. Chọn thư mục Drive:</p>
+                  <ol className="list-decimal list-inside space-y-1 ml-2">
+                    <li>Mở Google Drive trên trình duyệt</li>
+                    <li>Vào thư mục bạn muốn lưu file</li>
+                    <li>Copy URL từ thanh địa chỉ</li>
+                    <li>Paste URL vào ô "Drive Folder URL"</li>
+                  </ol>
+                </div>
+              </div>
             </div>
           </div>
         </div>
