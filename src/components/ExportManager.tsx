@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Download, FileSpreadsheet, Video, Package } from "lucide-react";
 import { toast } from "sonner";
@@ -26,6 +27,7 @@ interface ExportManagerProps {
 export const ExportManager = ({ annotations, videoFile, resolutionInfo, driveFolderId, driveFolderName }: ExportManagerProps) => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
+  const [exportMethod, setExportMethod] = useState<'local' | 'drive'>('local');
 
   const generateExcelData = useCallback(() => {
     const headers = ['ID_video', 'Meaning', 'Pos-tag', 'SideView','Video-File', 'Start Time (s)', 'End Time (s)', 'Duration (s)', 'Crop X', 'Crop Y', 'Crop Width', 'Crop Height', 'Created At'];
@@ -109,10 +111,15 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo, driveFol
       );
 
       // Upload to Google Drive or download locally
-      if (driveFolderId) {
+      console.log("Export method:", exportMethod);
+      console.log("Drive folder ID:", driveFolderId);
+
+      if (exportMethod === 'drive' && driveFolderId) {
+        console.log("Uploading to Google Drive...");
         await uploadToDrive(results);
       } else {
         // Download all processed videos with a small delay between downloads
+        console.log("Downloading locally...");
         for (let i = 0; i < results.length; i++) {
           const result = results[i];
           
@@ -139,7 +146,7 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo, driveFol
         }
       }
 
-      if (driveFolderId) {
+      if (exportMethod === 'drive' && driveFolderId) {
         toast(`Successfully exported ${results.length} video clips to Google Drive!`, { 
           description: `Uploaded to: ${driveFolderName}` 
         });
@@ -298,6 +305,25 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo, driveFol
 
         {/* Export Actions */}
         <div className="space-y-2">
+          <Label className="text-sm font-medium">Export Method</Label>
+          <div className="flex gap-4">
+            <Button 
+              variant={exportMethod === 'local' ? 'default' : 'outline'}
+              onClick={() => setExportMethod('local')}
+            >
+              💾 Download
+            </Button>
+            <Button 
+              variant={exportMethod === 'drive' ? 'default' : 'outline'}
+              onClick={() => setExportMethod('drive')}
+              disabled={!driveFolderId}
+            >
+              ☁️ Google Drive
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
           <Button
             onClick={downloadExcel}
             variant="outline"
@@ -312,7 +338,8 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo, driveFol
             <AlertDialogTrigger asChild>
               <Button
                 className="w-full shadow-glow"
-                disabled={annotations.length === 0 || isExporting || !videoFile}
+                disabled={annotations.length === 0 || isExporting || !videoFile || (exportMethod === 'drive' && !driveFolderId)}
+
               >
                 {isExporting ? (
                   <>
