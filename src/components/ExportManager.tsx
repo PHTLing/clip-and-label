@@ -183,6 +183,7 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo, driveFol
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/related; boundary="-------314159265358979323846"',
           },
           body: (() => {
             const boundary = '-------314159265358979323846';
@@ -199,7 +200,9 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo, driveFol
         });
 
         if (!uploadResponse.ok) {
-          throw new Error(`Failed to upload ${result.filename}`);
+          const errorText = await uploadResponse.text();
+          console.error(`Upload error for ${result.filename}:`, uploadResponse.status, errorText);
+          throw new Error(`Failed to upload ${result.filename}: ${uploadResponse.status} - ${errorText}`);
         }
 
         toast(`Uploaded ${i + 1}/${results.length}: ${result.filename}`);
