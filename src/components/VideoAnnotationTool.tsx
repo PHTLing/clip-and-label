@@ -4,6 +4,7 @@ import { Timeline } from "./Timeline";
 import { AnnotationPanel } from "./AnnotationPanel";
 import { ExportManager } from "./ExportManager";
 import { ExcelUploader } from "./ExcelUploader";
+import { GoogleDriveConnector } from "./GoogleDriveConnector";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -61,6 +62,9 @@ export const VideoAnnotationTool = () => {
   const [selectedAnnotation, setSelectedAnnotation] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [driveConnected, setDriveConnected] = useState<boolean>(false);
+  const [driveFolderId, setDriveFolderId] = useState<string>("");
+  const [driveFolderName, setDriveFolderName] = useState<string>("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -227,6 +231,12 @@ export const VideoAnnotationTool = () => {
         description: `Loaded ${loadedAnnotations.length} annotations` 
       });
     }
+  }, []);
+
+  const handleDriveFolderSelected = useCallback((folderId: string, folderName: string) => {
+    setDriveConnected(true);
+    setDriveFolderId(folderId);
+    setDriveFolderName(folderName);
   }, []);
 
   // Keyboard shortcuts
@@ -441,11 +451,18 @@ export const VideoAnnotationTool = () => {
                 onSideViewChange={setSideView}
               />
               
+              <GoogleDriveConnector
+                onFolderSelected={handleDriveFolderSelected}
+                isConnected={driveConnected}
+              />
+              
               <ExportManager
                 annotations={annotations}
                 videoFile={videoFile}
                 resolutionInfo={resolutionInfo}
                 videoFileName={videoFile?.name || ""}
+                driveFolderId={driveFolderId}
+                driveFolderName={driveFolderName}
               />
             </div>
           </div>
