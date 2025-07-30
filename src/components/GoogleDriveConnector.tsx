@@ -19,12 +19,36 @@ export const GoogleDriveConnector = ({ onFolderSelected, isConnected }: GoogleDr
 
   // Check for existing token on mount
   useEffect(() => {
-    const token = localStorage.getItem('gdrive_token');
+    const token = localStorage.getItem("gdrive_token");
+
     if (token) {
-      setIsTokenValid(true);
-      setAccessToken(token);
+      // Kiểm tra token có hợp lệ không
+      fetch("https://www.googleapis.com/drive/v3/about?fields=user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Invalid token");
+          return res.json();
+        })
+        .then((data) => {
+          setIsTokenValid(true);
+          setAccessToken(token);
+          toast("Connected to Google Drive", {
+            description: `Welcome ${data.user.displayName}`,
+          });
+        })
+        .catch(() => {
+          setIsTokenValid(false);
+          localStorage.removeItem("gdrive_token");
+          toast("Google Drive token expired", {
+            description: "Please enter a new access token",
+          });
+        });
     }
   }, []);
+
 
   const handleConnect = async () => {
     if (!accessToken.trim()) {
