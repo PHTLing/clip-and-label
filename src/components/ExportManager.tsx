@@ -19,9 +19,11 @@ interface ExportManagerProps {
     canvasWidth: number;
     canvasHeight: number;
   };
+  driveFolderId?: string;
+  driveFolderName?: string;
 }
 
-export const ExportManager = ({ annotations, videoFile, resolutionInfo }: ExportManagerProps) => {
+export const ExportManager = ({ annotations, videoFile, resolutionInfo, driveFolderId, driveFolderName }: ExportManagerProps) => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
@@ -106,35 +108,46 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo }: Export
         }
       );
 
-      // Download all processed videos with a small delay between downloads
-      for (let i = 0; i < results.length; i++) {
-        const result = results[i];
-        
-        // Create download link
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(result.blob);
-        
-        link.href = url;
-        link.download = result.filename;
-        link.style.display = 'none';
-        
-        // Trigger download
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Clean up URL and add small delay
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-        
-        // Small delay between downloads to avoid browser blocking
-        if (i < results.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+      // Upload to Google Drive or download locally
+      if (driveFolderId) {
+        await uploadToDrive(results);
+      } else {
+        // Download all processed videos with a small delay between downloads
+        for (let i = 0; i < results.length; i++) {
+          const result = results[i];
+          
+          // Create download link
+          const link = document.createElement('a');
+          const url = URL.createObjectURL(result.blob);
+          
+          link.href = url;
+          link.download = result.filename;
+          link.style.display = 'none';
+          
+          // Trigger download
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Clean up URL and add small delay
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          
+          // Small delay between downloads to avoid browser blocking
+          if (i < results.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
         }
       }
 
-      toast(`Successfully exported ${results.length} video clips!`, { 
-        description: "Check your downloads folder" 
-      });
+      if (driveFolderId) {
+        toast(`Successfully exported ${results.length} video clips to Google Drive!`, { 
+          description: `Uploaded to: ${driveFolderName}` 
+        });
+      } else {
+        toast(`Successfully exported ${results.length} video clips!`, { 
+          description: "Check your downloads folder" 
+        });
+      }
     } catch (error) {
       console.error('Video processing error:', error);
       toast("Video processing failed", { 
@@ -144,7 +157,60 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo }: Export
       setIsExporting(false);
       setExportProgress(0);
     }
-  }, [videoFile, annotations, resolutionInfo]);
+  }, [videoFile, annotations, resolutionInfo, driveFolderId]);
+
+  const uploadToDrive = useCallback(async (results: Array<{filename: string, blob: Blob}>) => {
+    const token = localStorage.getItem('gdrive_token');
+    if (!token || !driveFolderId) {
+      throw new Error('Google Drive not connected');
+    }
+
+    toast(`Uploading ${results.length} files to Google Drive...`);
+
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', result.blob);
+        
+        const metadata = {
+          name: result.filename,
+          parents: [driveFolderId]
+        };
+        
+        const uploadResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: (() => {
+            const boundary = '-------314159265358979323846';
+            const delimiter = '\r\n--' + boundary + '\r\n';
+            const close_delim = '\r\n--' + boundary + '--';
+            
+            let body = delimiter +
+              'Content-Type: application/json\r\n\r\n' +
+              JSON.stringify(metadata) + delimiter +
+              'Content-Type: ' + result.blob.type + '\r\n\r\n';
+            
+            return new Blob([body, result.blob, close_delim], {type: 'multipart/related; boundary="' + boundary + '"'});
+          })()
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error(`Failed to upload ${result.filename}`);
+        }
+
+        toast(`Uploaded ${i + 1}/${results.length}: ${result.filename}`);
+      } catch (error) {
+        console.error(`Error uploading ${result.filename}:`, error);
+        toast(`Failed to upload ${result.filename}`, { description: "Continuing with remaining files..." });
+      }
+    }
+
+    toast(`Successfully uploaded ${results.length} files to ${driveFolderName}!`);
+  }, [driveFolderId, driveFolderName]);
 
   const exportAll = useCallback(async () => {
     if (annotations.length === 0) {
