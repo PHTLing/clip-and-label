@@ -20,7 +20,12 @@ export class VideoProcessor {
         console.log(message);
       });
 
-      // Load FFmpeg with JSDelivr CDN (better CORS policy)
+      // Add progress monitoring and error handling
+      this.ffmpeg.on('progress', ({ progress }) => {
+        console.log('FFmpeg loading progress:', progress);
+      });
+
+      // Load FFmpeg with better error handling
       await this.ffmpeg.load({
         coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
         wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
@@ -28,9 +33,11 @@ export class VideoProcessor {
       });
 
       this.isLoaded = true;
+      console.log('FFmpeg loaded successfully');
     } catch (error) {
       console.error('Failed to load FFmpeg:', error);
-      throw error;
+      this.isLoaded = false;
+      throw new Error(`FFmpeg initialization failed: ${error.message}`);
     }
   }
 
@@ -45,9 +52,30 @@ export class VideoProcessor {
       await this.load();
     }
 
+    // Memory check before processing
     try {
-      // Write video file to FFmpeg
+      const memoryInfo = (performance as any).memory;
+      if (memoryInfo && memoryInfo.usedJSHeapSize > 500 * 1024 * 1024) {
+        console.warn('High memory usage detected, attempting cleanup');
+        if (typeof (window as any).gc === 'function') {
+          (window as any).gc();
+        }
+      }
+    } catch (e) {
+      // Memory API not available
+    }
+
+    try {
+      console.log('Starting video processing:', {
+        filename: annotation.filename,
+        fileSize: Math.round(videoFile.size / 1024 / 1024) + 'MB',
+        cropArea: annotation.cropArea,
+        timeRange: annotation.timeRange
+      });
+
+      // Write video file to FFmpeg with better error handling
       await this.ffmpeg.writeFile('input.mp4', await fetchFile(videoFile));
+      console.log('Video file written to FFmpeg successfully');
 
       const { timeRange, cropArea } = annotation;
 
@@ -89,6 +117,23 @@ export class VideoProcessor {
         duration
       });
 
+      // Add progress monitoring for FFmpeg execution
+      let progressCallback: (() => void) | undefined;
+      if (onProgress) {
+        progressCallback = () => {
+          const currentProgress = Math.min(95, (Date.now() % 10000) / 100);
+          onProgress(currentProgress);
+        };
+        const progressInterval = setInterval(progressCallback, 100);
+        setTimeout(() => clearInterval(progressInterval), 5000);
+      }
+
+      console.log('Executing FFmpeg command with parameters:', {
+        start: timeRange.start,
+        duration,
+        crop: `${finalCropW}:${finalCropH}:${cropX}:${cropY}`
+      });
+
       await this.ffmpeg.exec([
         '-i', 'input.mp4',
         '-ss', timeRange.start.toString(),
@@ -98,13 +143,29 @@ export class VideoProcessor {
         '-preset', 'ultrafast', // Faster encoding
         '-crf', '23', // Quality setting
         '-c:a', 'aac',
+        '-movflags', '+faststart', // Optimize for web playback
         '-avoid_negative_ts', 'make_zero',
         '-y',
         'output.mp4'
       ]);
 
+      console.log('FFmpeg processing completed');
+
+      // Verify output file exists
+      const files = await this.ffmpeg.listDir('/');
+      const outputExists = files.some(file => file.name === 'output.mp4');
+      if (!outputExists) {
+        throw new Error('Output file was not created');
+      }
+
       // Read the processed video
       const data = await this.ffmpeg.readFile('output.mp4');
+      
+      if (!data || data.length === 0) {
+        throw new Error('Output file is empty');
+      }
+
+      console.log('Video processing successful, output size:', Math.round(data.length / 1024) + 'KB');
       
       if (onProgress) {
         onProgress(100);

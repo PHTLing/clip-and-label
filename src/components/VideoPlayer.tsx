@@ -53,7 +53,7 @@ export const VideoPlayer = ({
     initialCrop: cropArea
   });
 
-  // Video event handlers
+  // Video event handlers with error handling
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -61,6 +61,11 @@ export const VideoPlayer = ({
     const handleLoadedMetadata = () => {
       const width = video.videoWidth;
       const height = video.videoHeight;
+
+      if (width === 0 || height === 0) {
+        console.error('Invalid video dimensions');
+        return;
+      }
 
       setVideoResolution({ width, height });
 
@@ -70,26 +75,41 @@ export const VideoPlayer = ({
         canvasWidth: width,
         canvasHeight: height,
       });
-      onDurationChange(video.duration);
+      onDurationChange(video.duration || 0);
     };
 
     const handleTimeUpdate = () => {
-      onTimeUpdate(video.currentTime);
+      if (!isNaN(video.currentTime)) {
+        onTimeUpdate(video.currentTime);
+      }
     };
 
     const handlePlay = () => onPlayStateChange(true);
     const handlePause = () => onPlayStateChange(false);
+    
+    const handleError = (e: Event) => {
+      console.error('Video error:', e);
+      onPlayStateChange(false);
+    };
+
+    const handleStalled = () => {
+      console.warn('Video playback stalled');
+    };
 
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('play', handlePlay);
     video.addEventListener('pause', handlePause);
+    video.addEventListener('error', handleError);
+    video.addEventListener('stalled', handleStalled);
 
     return () => {
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('timeupdate', handleTimeUpdate);
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
+      video.removeEventListener('error', handleError);
+      video.removeEventListener('stalled', handleStalled);
     };
   }, [onTimeUpdate, onDurationChange, onPlayStateChange]);
 
