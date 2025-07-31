@@ -229,6 +229,10 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo, driveFol
     }
 
     try {
+      if (driveFolderId && exportMethod === 'drive') {
+        console.log(`Exporting to Google Drive folder: ${driveFolderName}`);
+      } else {
+        console.log("Exporting locally");}
       // Download Excel first
       downloadExcel();
       

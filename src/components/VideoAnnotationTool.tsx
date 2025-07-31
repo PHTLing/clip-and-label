@@ -428,11 +428,7 @@ export const VideoAnnotationTool = () => {
 
             {/* Control Panel */}
             <div className="space-y-4">
-              <ExcelUploader
-                onAnnotationsLoaded={handleAnnotationsLoaded}
-                disabled={!videoFile}
-              />
-              
+                         
               <AnnotationPanel
                 label={currentLabel}
                 onLabelChange={setCurrentLabel}
@@ -450,7 +446,10 @@ export const VideoAnnotationTool = () => {
                 sideView={sideView}
                 onSideViewChange={setSideView}
               />
-              
+              <ExcelUploader
+                onAnnotationsLoaded={handleAnnotationsLoaded}
+                disabled={!videoFile}
+              />              
               <GoogleDriveConnector
                 onFolderSelected={handleDriveFolderSelected}
                 isConnected={driveConnected}

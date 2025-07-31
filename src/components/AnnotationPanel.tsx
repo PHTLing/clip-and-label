@@ -44,7 +44,7 @@ export const AnnotationPanel = ({
   sideView,
   onSideViewChange
 }: AnnotationPanelProps) => {
-  console.log('AnnotationPanel props:', { sideView, onSideViewChange: typeof onSideViewChange });
+  // console.log('AnnotationPanel props:', { sideView, onSideViewChange: typeof onSideViewChange });
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
