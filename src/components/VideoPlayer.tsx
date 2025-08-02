@@ -300,7 +300,11 @@ export const VideoPlayer = ({
       <Button variant="outline" size="sm" onClick={resetVideo}>
         <RotateCcw className="w-4 h-4" />
       </Button>
-      
+
+      <Button variant="outline" size="sm" onClick={() => onTimeUpdate(Math.max(currentTime - 5, 0))}>
+        ⏪ -5s
+      </Button>
+
       <Button variant="outline" size="sm" onClick={() => onTimeUpdate(Math.max(currentTime - 1, 0))}>
         ⏪ -1s
       </Button>
@@ -311,6 +315,10 @@ export const VideoPlayer = ({
 
       <Button variant="outline" size="sm" onClick={() => onTimeUpdate(Math.min(currentTime + 1, videoRef.current?.duration || 0))}>
         +1s ⏩
+      </Button>
+
+      <Button variant="outline" size="sm" onClick={() => onTimeUpdate(Math.min(currentTime + 5, videoRef.current?.duration || 0))}>
+        +5s ⏩
       </Button>
 
       <div className="text-sm text-muted-foreground min-w-[100px] text-center">
