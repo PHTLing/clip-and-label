@@ -239,21 +239,14 @@ export const VideoPlayer = ({
     {/* Video Container */}
     <div 
       className="flex justify-center items-center bg-black rounded-lg shadow-elegant overflow-hidden"
-      style={{
-          width: '100%',
-          maxWidth: `${videoResolution.width}px`,
-          aspectRatio: `${videoResolution.width} / ${videoResolution.height}`,
-          backgroundColor: 'black'
-        }}
-
+      style={{ maxWidth: '100%', maxHeight: '80vh' }}
     >
       <div
         ref={containerRef}
         className="relative"
         style={{
-          width: '100%',
-          height: '100%',
-          position: 'relative',
+          width: `${videoResolution.width}px`,
+          height: `${videoResolution.height}px`,
           cursor: dragState.isDragging ? 'grabbing' : 'default',
           padding: 0,
           margin: 0,
