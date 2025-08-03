@@ -239,15 +239,25 @@ export const VideoPlayer = ({
     {/* Video Container */}
     <div 
       className="flex justify-center items-center bg-black rounded-lg shadow-elegant overflow-hidden"
-      style={{ maxWidth: '100%', maxHeight: '80vh' }}
+      style={{
+          width: '100%',
+          maxWidth: `${videoResolution.width}px`,
+          aspectRatio: `${videoResolution.width} / ${videoResolution.height}`,
+          backgroundColor: 'black'
+        }}
+
     >
       <div
         ref={containerRef}
         className="relative"
         style={{
-          width: `${videoResolution.width}px`,
-          height: `${videoResolution.height}px`,
-          cursor: dragState.isDragging ? 'grabbing' : 'default'
+          width: '100%',
+          height: '100%',
+          position: 'relative',
+          cursor: dragState.isDragging ? 'grabbing' : 'default',
+          padding: 0,
+          margin: 0,
+          lineHeight: 0 // tránh dòng thừa
         }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -301,6 +311,11 @@ export const VideoPlayer = ({
         <RotateCcw className="w-4 h-4" />
       </Button>
 
+      {/* Tua -1ms */}
+      <Button variant="outline" size="sm" onClick={() => onTimeUpdate(Math.max(currentTime - 0.1, 0))}>
+        ⏪ -1ms
+      </Button>
+
       <Button variant="outline" size="sm" onClick={() => onTimeUpdate(Math.max(currentTime - 5, 0))}>
         ⏪ -5s
       </Button>
@@ -319,6 +334,11 @@ export const VideoPlayer = ({
 
       <Button variant="outline" size="sm" onClick={() => onTimeUpdate(Math.min(currentTime + 5, videoRef.current?.duration || 0))}>
         +5s ⏩
+      </Button>
+
+      {/* Tua 1ms */}
+      <Button variant="outline" size="sm" onClick={() => onTimeUpdate(Math.min(currentTime + 0.1, videoRef.current?.duration || 0))}>
+        +1ms ⏩
       </Button>
 
       <div className="text-sm text-muted-foreground min-w-[100px] text-center">
