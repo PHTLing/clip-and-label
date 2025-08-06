@@ -48,9 +48,11 @@ export const Timeline = ({
 
   useEffect(() => {
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'a' || e.key === 'A') {
+    if (e.key === 'ArrowLeft') {
+      // Phím mũi tên trái → đặt start
       onTimeRangeChange({ ...timeRange, start: currentTime });
-    } else if (e.key === 'd' || e.key === 'D') {
+    } else if (e.key === 'ArrowRight') {
+      // Phím mũi tên phải → đặt end
       onTimeRangeChange({ ...timeRange, end: currentTime });
     }
   };
