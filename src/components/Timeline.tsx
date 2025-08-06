@@ -46,6 +46,22 @@ export const Timeline = ({
     setEndHMS(secondsToHMS(timeRange.end));
   }, [timeRange]);
 
+  useEffect(() => {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'a' || e.key === 'A') {
+      onTimeRangeChange({ ...timeRange, start: currentTime });
+    } else if (e.key === 'd' || e.key === 'D') {
+      onTimeRangeChange({ ...timeRange, end: currentTime });
+    }
+  };
+
+  window.addEventListener('keydown', handleKeyDown);
+  return () => {
+    window.removeEventListener('keydown', handleKeyDown);
+  };
+}, [currentTime, timeRange, onTimeRangeChange]);
+
+
   const handleCurrentTimeChange = useCallback((value: number[]) => {
     onCurrentTimeChange(value[0]);
   }, [onCurrentTimeChange]);
