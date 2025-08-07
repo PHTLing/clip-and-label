@@ -259,14 +259,6 @@ export const VideoAnnotationTool = () => {
             handleAddAnnotation();
           }
           break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          setCurrentTime((prev) => Math.max(0, prev - 1));
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          setCurrentTime((prev) => Math.min(duration, prev + 1));
-          break;
       }
     };
 
