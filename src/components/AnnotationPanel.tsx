@@ -20,6 +20,8 @@ interface AnnotationPanelProps {
   selectedAnnotation?: string | null;
   startIndex: number;
   postag: string;
+  signer: string;
+  onSignerChange?: (val: string) => void;
   videoFileName?: string;
   onPostagChange?: (val: string) => void;
   setStartIndex: (val: number) => void;
@@ -40,6 +42,8 @@ export const AnnotationPanel = ({
   startIndex,
   setStartIndex,
   postag,
+  signer,
+  onSignerChange,
   onPostagChange,
   sideView,
   onSideViewChange
@@ -119,7 +123,18 @@ export const AnnotationPanel = ({
               className="w-full"
             />
           </div>
-          
+
+          <div className="space-y-2">
+            <Label htmlFor="signer">Signer (optional)</Label>
+            <Input
+              id="signer"
+              value={signer}
+              onChange={(e) => onSignerChange?.(e.target.value)}
+              placeholder="Enter signer..."
+              className="w-full"
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="postag">POS Tag (optional)</Label>
             <select

@@ -30,12 +30,13 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo, driveFol
   const [exportMethod, setExportMethod] = useState<'local' | 'drive'>('local');
 
   const generateExcelData = useCallback(() => {
-    const headers = ['ID_video', 'Meaning', 'Pos-tag', 'SideView','Video-File', 'Start Time (s)', 'End Time (s)', 'Duration (s)', 'Crop X', 'Crop Y', 'Crop Width', 'Crop Height', 'Created At'];
+    const headers = ['ID_video', 'Meaning', 'Pos-tag','Signer','SideView','Video-File', 'Start Time (s)', 'End Time (s)', 'Duration (s)', 'Crop X', 'Crop Y', 'Crop Width', 'Crop Height', 'Created At'];
     const rows = annotations.map(annotation => [
       annotation.filename,
       annotation.label,
       annotation.postag || "",
-      annotation.sideView ? "true" : "false", // ✅ xuất giá trị
+      annotation.signer || "", // Đảm bảo xuất signer vào Excel
+      annotation.sideView ? "true" : "false",
       videoFile?.name || "",
       annotation.timeRange.start.toFixed(2),
       annotation.timeRange.end.toFixed(2),
@@ -44,7 +45,7 @@ export const ExportManager = ({ annotations, videoFile, resolutionInfo, driveFol
       Math.round(annotation.cropArea.y),
       Math.round(annotation.cropArea.width),
       Math.round(annotation.cropArea.height),
-      annotation.createdAt.toISOString()
+      annotation.createdAt?.toISOString?.() || ""
     ]);
 
     return [headers, ...rows];

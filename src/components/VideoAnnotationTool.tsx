@@ -7,8 +7,17 @@ import { ExcelUploader } from "./ExcelUploader";
 import { GoogleDriveConnector } from "./GoogleDriveConnector";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Upload, Video, FileText, Download } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
+import { Upload, Video } from "lucide-react";
 import { toast } from "sonner";
 
 export interface CropArea {
@@ -27,6 +36,7 @@ export interface Annotation {
   id: string;
   label: string;
   postag: string;
+  signer?: string;
   cropArea: CropArea;
   timeRange: TimeRange;
   filename: string;
@@ -65,6 +75,11 @@ export const VideoAnnotationTool = () => {
   const [driveConnected, setDriveConnected] = useState<boolean>(false);
   const [driveFolderId, setDriveFolderId] = useState<string>("");
   const [driveFolderName, setDriveFolderName] = useState<string>("");
+  const [signer, setSigner] = useState<string>("");
+
+  const onSignerChange = useCallback((value: string) => {
+    setSigner(value);
+  }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -73,20 +88,19 @@ export const VideoAnnotationTool = () => {
     if (!file) return;
 
     if (!file.type.startsWith('video/')) {
-      toast("Please select a valid video file", { 
-        description: "Supported formats: MP4, AVI, MOV, WMV" 
+      toast("Please select a valid video file", {
+        description: "Supported formats: MP4, AVI, MOV, WMV"
       });
       return;
     }
 
     if (file.size > 500 * 1024 * 1024) { // 500MB limit
-      toast("File too large", { 
-        description: "Please select a video smaller than 500MB" 
+      toast("File too large", {
+        description: "Please select a video smaller than 500MB"
       });
       return;
     }
 
-    // Check if there are existing annotations
     if (annotations.length > 0) {
       setPendingFile(file);
       setShowConfirmDialog(true);
@@ -103,18 +117,17 @@ export const VideoAnnotationTool = () => {
       setVideoFile(file);
       setVideoUrl(url);
 
-       // 👇 XÓA localStorage cũ
       localStorage.removeItem('videoAnnotations');
-      
-      // Reset state
+
       setCurrentTime(0);
       setTimeRange({ start: 0, end: 5 });
       setAnnotations([]);
       setCurrentLabel("");
       setSelectedAnnotation(null);
-      
-      toast("Video loaded successfully!", { 
-        description: `${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)` 
+      setSigner("");   // reset signer khi load video mới
+
+      toast("Video loaded successfully!", {
+        description: `${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`
       });
     } catch (error) {
       toast("Failed to load video", { description: "Please try again" });
@@ -134,7 +147,6 @@ export const VideoAnnotationTool = () => {
   const handleCancelNewVideo = useCallback(() => {
     setPendingFile(null);
     setShowConfirmDialog(false);
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -159,9 +171,8 @@ export const VideoAnnotationTool = () => {
       toast("Invalid time range");
       return;
     }
+
     if (selectedAnnotation) {
-      // Update existing annotation
-      console.log("DEBUG: sideView value when update annotation:", sideView);
       setAnnotations(prev =>
         prev.map(ann =>
           ann.id === selectedAnnotation
@@ -169,6 +180,7 @@ export const VideoAnnotationTool = () => {
                 ...ann,
                 label: currentLabel.trim(),
                 postag: postag || undefined,
+                signer: signer || undefined,
                 cropArea: { ...cropArea },
                 timeRange: { ...timeRange },
                 sideView: sideView
@@ -179,29 +191,31 @@ export const VideoAnnotationTool = () => {
       setSelectedAnnotation(null);
       setCurrentLabel("");
       setSideView(false);
-      toast("Annotation updated successfully!", { 
-        description: `Updated: ${currentLabel.trim()}` 
+      setSigner("");   // reset sau khi update
+      toast("Annotation updated successfully!", {
+        description: `Updated: ${currentLabel.trim()}`
       });
     } else {
       const newAnnotation: Annotation = {
         id: Date.now().toString(),
         label: currentLabel.trim(),
         postag: postag || undefined,
+        signer: signer || undefined,
         cropArea: { ...cropArea },
         timeRange: { ...timeRange },
         filename: generateFilename(currentLabel, annotations.length),
         createdAt: new Date(),
         sideView: sideView
       };
-      console.log("DEBUG: sideView value when adding annotation:", sideView);
       setAnnotations(prev => [...prev, newAnnotation]);
       setCurrentLabel("");
       setSideView(false);
-      toast("Annotation added successfully!", { 
-        description: `Label: ${newAnnotation.label}` 
+      setSigner("");   // ✅ FIX: reset signer sau khi thêm mới
+      toast("Annotation added successfully!", {
+        description: `Label: ${newAnnotation.label}`
       });
     }
-    }, [currentLabel, cropArea, timeRange, annotations.length, generateFilename, selectedAnnotation, postag, sideView]);
+  }, [currentLabel, cropArea, timeRange, annotations.length, generateFilename, selectedAnnotation, postag, sideView, signer]);
 
   const handleDeleteAnnotation = useCallback((id: string) => {
     setAnnotations(prev => prev.filter(ann => ann.id !== id));
@@ -217,6 +231,7 @@ export const VideoAnnotationTool = () => {
     setCurrentLabel(annotation.label);
     setSideView(annotation.sideView || false);
     setPostag(annotation.postag || "");
+    setSigner(annotation.signer || "");   // đảm bảo signer được load khi edit
     toast("Annotation selected", { description: `Jumped to: ${annotation.label}` });
   }, []);
 
@@ -227,8 +242,9 @@ export const VideoAnnotationTool = () => {
       setCurrentLabel("");
       setSideView(false);
       setPostag("");
-      toast("Annotations imported successfully!", { 
-        description: `Loaded ${loadedAnnotations.length} annotations` 
+      setSigner("");
+      toast("Annotations imported successfully!", {
+        description: `Loaded ${loadedAnnotations.length} annotations`
       });
     }
   }, []);
@@ -243,7 +259,7 @@ export const VideoAnnotationTool = () => {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement) return;
-      
+
       switch (e.key) {
         case ' ':
           e.preventDefault();
@@ -266,32 +282,6 @@ export const VideoAnnotationTool = () => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [handleAddAnnotation]);
 
-  // // Auto-save to localStorage
-  // useEffect(() => {
-  //   if (annotations.length > 0) {
-  //     localStorage.setItem('videoAnnotations', JSON.stringify(annotations));
-  //   }
-  // }, [annotations]);
-
-  // // Load saved annotations
-  // useEffect(() => {
-  //   const saved = localStorage.getItem('videoAnnotations');
-  //   if (saved) {
-  //     try {
-  //       const parsed = JSON.parse(saved);
-  //       // Only load if we have a video file
-  //       if (videoFile && parsed.length > 0) {
-  //         setAnnotations(parsed.map((ann: any) => ({
-  //           ...ann,
-  //           createdAt: new Date(ann.createdAt)
-  //         })));
-  //       }
-  //     } catch (error) {
-  //       console.error('Failed to load saved annotations:', error);
-  //     }
-  //   }
-  // }, [videoFile]);
-
   // Prevent accidental page leave
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -305,7 +295,6 @@ export const VideoAnnotationTool = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [annotations.length]);
 
-  // Cleanup video URL when component unmounts
   useEffect(() => {
     return () => {
       if (videoUrl) {
@@ -325,8 +314,6 @@ export const VideoAnnotationTool = () => {
           <p className="text-muted-foreground text-lg">
             Create labeled video clips for your dataset
           </p>
-          
-          {/* Stats */}
           {videoFile && (
             <div className="flex justify-center gap-6 text-sm">
               <div className="flex items-center gap-2">
@@ -343,8 +330,6 @@ export const VideoAnnotationTool = () => {
               </div>
             </div>
           )}
-          
-          
         </div>
 
         {/* Upload Section */}
@@ -367,9 +352,9 @@ export const VideoAnnotationTool = () => {
                     <p className="text-muted-foreground mb-4">
                       Drag & drop or click to select • Max 500MB • MP4, AVI, MOV supported
                     </p>
-                    <Button 
-                      onClick={handleUploadClick} 
-                      size="lg" 
+                    <Button
+                      onClick={handleUploadClick}
+                      size="lg"
                       className="shadow-glow"
                       disabled={isUploading}
                     >
@@ -394,7 +379,6 @@ export const VideoAnnotationTool = () => {
         {/* Main Interface */}
         {videoFile && (
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            {/* Video Player Section */}
             <div className="xl:col-span-2 space-y-4">
               <VideoPlayer
                 videoUrl={videoUrl}
@@ -407,7 +391,6 @@ export const VideoAnnotationTool = () => {
                 isPlaying={isPlaying}
                 onPlayStateChange={setIsPlaying}
               />
-              {/* Timeline Component */}
               <Timeline
                 duration={duration}
                 currentTime={currentTime}
@@ -418,9 +401,7 @@ export const VideoAnnotationTool = () => {
               />
             </div>
 
-            {/* Control Panel */}
             <div className="space-y-4">
-                         
               <AnnotationPanel
                 label={currentLabel}
                 onLabelChange={setCurrentLabel}
@@ -434,6 +415,8 @@ export const VideoAnnotationTool = () => {
                 startIndex={startIndex}
                 setStartIndex={setStartIndex}
                 postag={postag}
+                signer={signer}
+                onSignerChange={onSignerChange}
                 onPostagChange={setPostag}
                 sideView={sideView}
                 onSideViewChange={setSideView}
@@ -441,12 +424,11 @@ export const VideoAnnotationTool = () => {
               <ExcelUploader
                 onAnnotationsLoaded={handleAnnotationsLoaded}
                 disabled={!videoFile}
-              />              
+              />
               <GoogleDriveConnector
                 onFolderSelected={handleDriveFolderSelected}
                 isConnected={driveConnected}
               />
-              
               <ExportManager
                 annotations={annotations}
                 videoFile={videoFile}
