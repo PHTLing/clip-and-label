@@ -158,7 +158,7 @@ export const VideoAnnotationTool = () => {
 
   const generateFilename = useCallback((label: string, index: number) => {
     const number = (startIndex + index).toString().padStart(4, '0');
-    return `VTV${number}.mp4`;
+    return `A${number}.mp4`;
   }, [startIndex]);
 
   const handleAddAnnotation = useCallback(() => {
