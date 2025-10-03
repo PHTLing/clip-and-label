@@ -44,14 +44,18 @@ export const VideoPlayer = ({
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
   const [videoResolution, setVideoResolution] = useState<{ width: number, height: number }>({ width: 0, height: 0 });
+  const [displaySize, setDisplaySize] = useState<{ width: number, height: number }>({ width: 0, height: 0 });
   const [dragState, setDragState] = useState<DragState>({
     isDragging: false,
     isResizing: false,
     dragStart: { x: 0, y: 0 },
     initialCrop: cropArea
   });
+
+  // Max display dimensions for consistent viewing
+  const MAX_DISPLAY_WIDTH = 1000;
+  const MAX_DISPLAY_HEIGHT = 700;
 
   // Video event handlers with error handling
   useEffect(() => {
@@ -69,11 +73,28 @@ export const VideoPlayer = ({
 
       setVideoResolution({ width, height });
 
+      // Calculate scaled display size
+      let displayWidth = width;
+      let displayHeight = height;
+      
+      // Scale down if video is too large
+      if (width > MAX_DISPLAY_WIDTH || height > MAX_DISPLAY_HEIGHT) {
+        const widthRatio = MAX_DISPLAY_WIDTH / width;
+        const heightRatio = MAX_DISPLAY_HEIGHT / height;
+        const scale = Math.min(widthRatio, heightRatio);
+        
+        displayWidth = Math.floor(width * scale);
+        displayHeight = Math.floor(height * scale);
+      }
+
+      setDisplaySize({ width: displayWidth, height: displayHeight });
+
+      // Pass both actual video resolution and display canvas size
       onResolutionChange?.({
         videoWidth: width,
         videoHeight: height,
-        canvasWidth: width,
-        canvasHeight: height,
+        canvasWidth: displayWidth,
+        canvasHeight: displayHeight,
       });
       onDurationChange(video.duration || 0);
     };
@@ -245,12 +266,12 @@ export const VideoPlayer = ({
         ref={containerRef}
         className="relative"
         style={{
-          width: `${videoResolution.width}px`,
-          height: `${videoResolution.height}px`,
+          width: `${displaySize.width}px`,
+          height: `${displaySize.height}px`,
           cursor: dragState.isDragging ? 'grabbing' : 'default',
           padding: 0,
           margin: 0,
-          lineHeight: 0 // tránh dòng thừa
+          lineHeight: 0
         }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -260,8 +281,8 @@ export const VideoPlayer = ({
         <video
           ref={videoRef}
           src={videoUrl}
-          width={videoResolution.width}
-          height={videoResolution.height}
+          width={displaySize.width}
+          height={displaySize.height}
           style={{ display: 'block' }}
           onContextMenu={e => e.preventDefault()}
         />
