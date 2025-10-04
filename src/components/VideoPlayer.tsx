@@ -73,18 +73,19 @@ export const VideoPlayer = ({
 
       setVideoResolution({ width, height });
 
-      // Calculate scaled display size
+      // Calculate scaled display size - preserve exact aspect ratio
       let displayWidth = width;
       let displayHeight = height;
       
-      // Scale down if video is too large
+      // Scale down if video is too large, but keep exact ratio
       if (width > MAX_DISPLAY_WIDTH || height > MAX_DISPLAY_HEIGHT) {
         const widthRatio = MAX_DISPLAY_WIDTH / width;
         const heightRatio = MAX_DISPLAY_HEIGHT / height;
         const scale = Math.min(widthRatio, heightRatio);
         
-        displayWidth = Math.floor(width * scale);
-        displayHeight = Math.floor(height * scale);
+        // Don't floor - keep precise values to maintain aspect ratio
+        displayWidth = width * scale;
+        displayHeight = height * scale;
       }
 
       setDisplaySize({ width: displayWidth, height: displayHeight });
