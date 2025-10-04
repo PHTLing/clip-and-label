@@ -83,24 +83,14 @@ export class VideoProcessor {
         throw new Error('Missing resolution info');
       }
 
-      // Calculate scale factors - should be identical for both axes if aspect ratio preserved
-      const scaleX = videoResolution.width / canvasResolution.width;
-      const scaleY = videoResolution.height / canvasResolution.height;
-
-      // Ensure crop doesn't exceed boundaries and has minimum size
+      // No scaling needed - canvas and video are 1:1, use direct pixel values
       const minSize = 32; // Minimum crop size to avoid memory issues
       
-      // Use precise scaling, then round to even numbers (required by codecs)
-      const preciseX = cropArea.x * scaleX;
-      const preciseY = cropArea.y * scaleY;
-      const preciseW = cropArea.width * scaleX;
-      const preciseH = cropArea.height * scaleY;
-      
-      // Round to nearest even number to maintain codec compatibility
-      const cropX = Math.max(0, Math.round(preciseX / 2) * 2);
-      const cropY = Math.max(0, Math.round(preciseY / 2) * 2);
-      const cropW = Math.max(minSize, Math.round(preciseW / 2) * 2);
-      const cropH = Math.max(minSize, Math.round(preciseH / 2) * 2);
+      // Round to nearest even number (required by codecs) 
+      const cropX = Math.max(0, Math.round(cropArea.x / 2) * 2);
+      const cropY = Math.max(0, Math.round(cropArea.y / 2) * 2);
+      const cropW = Math.max(minSize, Math.round(cropArea.width / 2) * 2);
+      const cropH = Math.max(minSize, Math.round(cropArea.height / 2) * 2);
       
       // Final boundary check
       const finalCropW = Math.min(cropW, videoResolution.width - cropX);
@@ -114,8 +104,7 @@ export class VideoProcessor {
         throw new Error('Invalid duration');
       }
 
-      console.log('Debug Final Crop:', {
-        scaleX, scaleY,
+      console.log('Debug Final Crop (Direct Pixels - No Scaling):', {
         cropArea,
         cropX, cropY, 
         cropW: finalCropW, 
