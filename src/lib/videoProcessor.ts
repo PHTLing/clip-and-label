@@ -83,20 +83,28 @@ export class VideoProcessor {
         throw new Error('Missing resolution info');
       }
 
-      // Calculate scale factors
+      // Calculate scale factors - should be identical for both axes if aspect ratio preserved
       const scaleX = videoResolution.width / canvasResolution.width;
       const scaleY = videoResolution.height / canvasResolution.height;
 
       // Ensure crop doesn't exceed boundaries and has minimum size
       const minSize = 32; // Minimum crop size to avoid memory issues
-      const cropX = Math.floor(Math.max(0, Math.min(cropArea.x * scaleX, videoResolution.width - minSize)));
-      const cropY = Math.floor(Math.max(0, Math.min(cropArea.y * scaleY, videoResolution.height - minSize)));
-      const cropW = Math.floor(Math.max(minSize, Math.min(cropArea.width * scaleX, videoResolution.width - cropX)));
-      const cropH = Math.floor(Math.max(minSize, Math.min(cropArea.height * scaleY, videoResolution.height - cropY)));
       
-      // Ensure even dimensions (required by many codecs)
-      const finalCropW = cropW % 2 === 0 ? cropW : cropW - 1;
-      const finalCropH = cropH % 2 === 0 ? cropH : cropH - 1;
+      // Use precise scaling, then round to even numbers (required by codecs)
+      const preciseX = cropArea.x * scaleX;
+      const preciseY = cropArea.y * scaleY;
+      const preciseW = cropArea.width * scaleX;
+      const preciseH = cropArea.height * scaleY;
+      
+      // Round to nearest even number to maintain codec compatibility
+      const cropX = Math.max(0, Math.round(preciseX / 2) * 2);
+      const cropY = Math.max(0, Math.round(preciseY / 2) * 2);
+      const cropW = Math.max(minSize, Math.round(preciseW / 2) * 2);
+      const cropH = Math.max(minSize, Math.round(preciseH / 2) * 2);
+      
+      // Final boundary check
+      const finalCropW = Math.min(cropW, videoResolution.width - cropX);
+      const finalCropH = Math.min(cropH, videoResolution.height - cropY);
       
       // FFmpeg command to crop and trim video
       const duration = timeRange.end - timeRange.start;
